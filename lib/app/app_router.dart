@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../screens/classic_game_screen.dart';
 import '../screens/daily_challenge_screen.dart';
 import '../screens/daily_complete_screen.dart';
+import '../models/game_result.dart';
 import '../screens/game_over_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/how_to_play_screen.dart';
@@ -28,11 +29,18 @@ abstract final class AppRouter {
     splash: (_) => const SplashScreen(),
     home: (_) => const HomeScreen(),
     classicGame: (_) => const ClassicGameScreen(),
-    gameOver: (_) => const GameOverScreen(),
+    gameOver: _gameOverRoute,
     dailyChallenge: (_) => const DailyChallengeScreen(),
     dailyComplete: (_) => const DailyCompleteScreen(),
     stats: (_) => const StatsScreen(),
     howToPlay: (_) => const HowToPlayScreen(),
     settings: (_) => const SettingsScreen(),
   };
+
+  static Widget _gameOverRoute(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final result =
+        args is GameResult ? args : GameResult.placeholder();
+    return GameOverScreen(result: result);
+  }
 }

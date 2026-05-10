@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart' show Ticker;
 
 import '../app/app_colors.dart';
+import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../game/game_controller.dart';
+import '../models/game_result.dart';
 import '../widgets/number_tile.dart';
+
+enum _PauseChoice { resume, restart, home }
 
 /// Classic timed round driven by [GameController] (no submit — sum = target to solve).
 class ClassicGameScreen extends StatefulWidget {
@@ -15,67 +20,107 @@ class ClassicGameScreen extends StatefulWidget {
   State<ClassicGameScreen> createState() => _ClassicGameScreenState();
 }
 
-class _ClassicGameScreenState extends State<ClassicGameScreen>
-    with SingleTickerProviderStateMixin {
+class _ClassicGameScreenState extends State<ClassicGameScreen> {
   late final GameController _game;
-  late final Ticker _ticker;
-  Duration? _prevElapsed;
+  Timer? _roundTimer;
+  bool _paused = false;
+  bool _navigatedToGameOver = false;
 
   @override
   void initState() {
     super.initState();
     _game = GameController(onChanged: _onGameChanged);
     _game.resetSession();
-
-    _ticker = createTicker(_onTick)..start();
-  }
-
-  void _onTick(Duration elapsed) {
-    final prev = _prevElapsed;
-    _prevElapsed = elapsed;
-    if (prev == null) return;
-    final ms = (elapsed - prev).inMilliseconds;
-    if (ms <= 0) return;
-    _game.tick(ms);
+    _startRoundTimer();
   }
 
   void _onGameChanged() {
     if (mounted) setState(() {});
   }
 
+  void _cancelRoundTimer() {
+    _roundTimer?.cancel();
+    _roundTimer = null;
+  }
+
+  void _startRoundTimer() {
+    _cancelRoundTimer();
+    if (!mounted || _paused || _navigatedToGameOver || _game.isRoundEnded) {
+      return;
+    }
+    _roundTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _paused || _navigatedToGameOver) return;
+      _game.tick(1000);
+      if (_game.isRoundEnded) {
+        _finishRoundAndNavigate();
+      }
+    });
+  }
+
+  void _finishRoundAndNavigate() {
+    if (_navigatedToGameOver || !mounted) return;
+    _navigatedToGameOver = true;
+    _cancelRoundTimer();
+
+    final result = GameResult(
+      score: _game.score,
+      targetsSolved: _game.solvedCount,
+      mistakes: _game.mistakeCount,
+      bestCombo: _game.bestCombo,
+      accuracy: GameResult.computeAccuracy(
+        targetsSolved: _game.solvedCount,
+        mistakes: _game.mistakeCount,
+      ),
+      durationSeconds: _game.config.classicDurationSeconds,
+      playedAt: DateTime.now(),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        AppRouter.gameOver,
+        arguments: result,
+      );
+    });
+  }
+
   @override
   void dispose() {
-    _ticker.dispose();
+    _cancelRoundTimer();
     super.dispose();
   }
 
-  Future<void> _pause() async {
-    _ticker.stop();
-    _prevElapsed = null;
-    if (!mounted) return;
+  Future<void> _showPauseModal() async {
+    _cancelRoundTimer();
+    setState(() => _paused = true);
 
-    await showDialog<void>(
+    if (!mounted) return;
+    final choice = await showDialog<_PauseChoice>(
       context: context,
+      barrierDismissible: true,
       builder: (context) {
         return AlertDialog(
           backgroundColor: AppColors.surfaceContainer,
           title: Text('Paused', style: AppTextStyles.headline),
           content: Text(
-            'Gameplay pauses here. More options later.',
+            'Timer is paused. What would you like to do?',
             style: AppTextStyles.body,
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () =>
+                  Navigator.of(context).pop(_PauseChoice.resume),
               child: const Text('Resume'),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop();
-              },
+              onPressed: () =>
+                  Navigator.of(context).pop(_PauseChoice.restart),
+              child: const Text('Restart'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(_PauseChoice.home),
               child: Text(
-                'Quit',
+                'Home',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ),
@@ -84,9 +129,25 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
       },
     );
 
-    if (mounted) {
-      _prevElapsed = null;
-      _ticker.start();
+    if (!mounted) return;
+
+    if (choice == _PauseChoice.restart) {
+      setState(() {
+        _paused = false;
+        _navigatedToGameOver = false;
+        _game.resetSession();
+      });
+      _startRoundTimer();
+    } else if (choice == _PauseChoice.home) {
+      setState(() => _paused = false);
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.home,
+        (_) => false,
+      );
+    } else {
+      // Resume, or dismissed barrier — continue the round.
+      setState(() => _paused = false);
+      if (!_game.isRoundEnded) _startRoundTimer();
     }
   }
 
@@ -100,6 +161,8 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
   Widget build(BuildContext context) {
     final models = _game.tileModels();
     final ended = _game.isRoundEnded;
+    final interactive =
+        !ended && !_paused && !_navigatedToGameOver;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -136,14 +199,6 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
               _TargetCard(target: _game.target),
               const SizedBox(height: AppSpacing.md),
               _CurrentSumPanel(sum: _game.currentSum, target: _game.target),
-              if (ended) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Time\'s up — board locked.',
-                  style: AppTextStyles.caption,
-                  textAlign: TextAlign.center,
-                ),
-              ],
               const SizedBox(height: AppSpacing.md),
               Expanded(
                 child: GridView.builder(
@@ -158,7 +213,9 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                   itemBuilder: (context, index) {
                     return NumberTile(
                       tile: models[index],
-                      onTap: () => _game.toggleTile(index),
+                      onTap: interactive
+                          ? () => _game.toggleTile(index)
+                          : null,
                     );
                   },
                 ),
@@ -168,14 +225,17 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: ended ? null : _game.clearSelection,
+                      onPressed:
+                          interactive ? _game.clearSelection : null,
                       child: const Text('Clear'),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: FilledButton.tonal(
-                      onPressed: _pause,
+                      onPressed: (ended || _navigatedToGameOver)
+                          ? null
+                          : _showPauseModal,
                       child: const Text('Pause'),
                     ),
                   ),
