@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
 import '../app/app_spacing.dart';
+import '../models/player_stats.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/zippy_header.dart';
@@ -23,19 +24,12 @@ class StatsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: FutureBuilder<List<int>>(
-        future: Future.wait([
-          LocalStorageService.instance
-              .getInt(LocalStorageService.keyBestClassicScore),
-          LocalStorageService.instance
-              .getInt(LocalStorageService.keyGamesPlayed),
-          LocalStorageService.instance
-              .getInt(LocalStorageService.keyDailyStreak),
-        ]),
+      body: FutureBuilder<PlayerStats>(
+        future: LocalStorageService.instance.loadStats(),
         builder: (context, snapshot) {
-          final best = snapshot.data?[0] ?? 0;
-          final played = snapshot.data?[1] ?? 0;
-          final streak = snapshot.data?[2] ?? 0;
+          final stats = snapshot.data ?? PlayerStats.empty();
+          final avgAcc = stats.averageAccuracy;
+          final accLabel = '${(avgAcc * 100).round()}%';
 
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -47,19 +41,28 @@ class StatsScreen extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
               StatCard(
+                title: 'Total games played',
+                value: formatter.format(stats.totalGamesPlayed),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              StatCard(
                 title: 'Best classic score',
-                value: formatter.format(best),
+                value: formatter.format(stats.bestClassicScore),
               ),
               const SizedBox(height: AppSpacing.sm),
               StatCard(
-                title: 'Games played',
-                value: formatter.format(played),
+                title: 'Total targets solved',
+                value: formatter.format(stats.totalTargetsSolved),
               ),
               const SizedBox(height: AppSpacing.sm),
               StatCard(
-                title: 'Daily streak',
-                value: streak == 1 ? '1 day' : '${formatter.format(streak)} days',
-                accentTitle: true,
+                title: 'Best combo',
+                value: stats.bestCombo > 0 ? 'x${stats.bestCombo}' : '—',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              StatCard(
+                title: 'Average accuracy',
+                value: accLabel,
               ),
             ],
           );

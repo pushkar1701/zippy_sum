@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
 import '../app/app_router.dart';
@@ -20,6 +21,8 @@ class GameOverScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scoreFormat = NumberFormat.decimalPattern();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -63,6 +66,40 @@ class GameOverScreen extends StatelessWidget {
                         fontSize: 28,
                       ),
                     ),
+                    if (result.isNewBestScore) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accentCyan.withValues(alpha: 0.25),
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusFull),
+                          border: Border.all(color: AppColors.accentCyan),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.emoji_events_rounded,
+                              color: AppColors.accentCyan,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpacing.xs),
+                            Text(
+                              'NEW BEST SCORE',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.accentCyan,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       'Final score',
@@ -72,7 +109,7 @@ class GameOverScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      '${result.score}',
+                      scoreFormat.format(result.score),
                       style: AppTextStyles.display.copyWith(
                         color: AppColors.accentCyan,
                         fontSize: 40,
@@ -82,9 +119,20 @@ class GameOverScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
-              _StatRow(label: 'Targets solved', value: '${result.targetsSolved}'),
+              _StatRow(
+                label: 'Best score (all time)',
+                value: scoreFormat.format(result.bestScore),
+              ),
               const SizedBox(height: AppSpacing.sm),
-              _StatRow(label: 'Best combo', value: 'x${result.bestCombo}'),
+              _StatRow(
+                label: 'Targets solved',
+                value: '${result.targetsSolved}',
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _StatRow(
+                label: 'Best combo',
+                value: 'x${result.bestCombo}',
+              ),
               const SizedBox(height: AppSpacing.sm),
               _StatRow(label: 'Accuracy', value: _accuracyLabel()),
               const Spacer(),
@@ -136,8 +184,9 @@ class _StatRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(label, style: AppTextStyles.body),
-          const Spacer(),
+          Expanded(
+            child: Text(label, style: AppTextStyles.body),
+          ),
           Text(value, style: AppTextStyles.title),
         ],
       ),

@@ -1,4 +1,4 @@
-/// Outcome of a finished classic round (no persistence / XP / coins).
+/// Outcome of a finished classic round.
 class GameResult {
   const GameResult({
     required this.score,
@@ -9,6 +9,7 @@ class GameResult {
     required this.durationSeconds,
     required this.playedAt,
     this.isNewBestScore = false,
+    this.bestScore = 0,
   });
 
   final int score;
@@ -23,6 +24,9 @@ class GameResult {
   final DateTime playedAt;
   final bool isNewBestScore;
 
+  /// Lifetime best classic score after this round (filled when recording to storage).
+  final int bestScore;
+
   /// Accuracy for display: `targetsSolved / (targetsSolved + mistakes)`, or 0.
   static double computeAccuracy({
     required int targetsSolved,
@@ -31,6 +35,30 @@ class GameResult {
     final denom = targetsSolved + mistakes;
     if (denom == 0) return 0;
     return targetsSolved / denom;
+  }
+
+  GameResult copyWith({
+    int? score,
+    int? targetsSolved,
+    int? mistakes,
+    int? bestCombo,
+    double? accuracy,
+    int? durationSeconds,
+    DateTime? playedAt,
+    bool? isNewBestScore,
+    int? bestScore,
+  }) {
+    return GameResult(
+      score: score ?? this.score,
+      targetsSolved: targetsSolved ?? this.targetsSolved,
+      mistakes: mistakes ?? this.mistakes,
+      bestCombo: bestCombo ?? this.bestCombo,
+      accuracy: accuracy ?? this.accuracy,
+      durationSeconds: durationSeconds ?? this.durationSeconds,
+      playedAt: playedAt ?? this.playedAt,
+      isNewBestScore: isNewBestScore ?? this.isNewBestScore,
+      bestScore: bestScore ?? this.bestScore,
+    );
   }
 
   /// Placeholder when opening the route without arguments (should not happen in normal play).
@@ -44,6 +72,7 @@ class GameResult {
       accuracy: 0,
       durationSeconds: 60,
       playedAt: now,
+      bestScore: 0,
     );
   }
 }

@@ -8,6 +8,7 @@ import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../game/game_controller.dart';
 import '../models/game_result.dart';
+import '../services/local_storage_service.dart';
 import '../widgets/number_tile.dart';
 
 enum _PauseChoice { resume, restart, home }
@@ -57,12 +58,12 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
     });
   }
 
-  void _finishRoundAndNavigate() {
+  Future<void> _finishRoundAndNavigate() async {
     if (_navigatedToGameOver || !mounted) return;
     _navigatedToGameOver = true;
     _cancelRoundTimer();
 
-    final result = GameResult(
+    final raw = GameResult(
       score: _game.score,
       targetsSolved: _game.solvedCount,
       mistakes: _game.mistakeCount,
@@ -75,13 +76,13 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
       playedAt: DateTime.now(),
     );
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(
-        AppRouter.gameOver,
-        arguments: result,
-      );
-    });
+    final recorded =
+        await LocalStorageService.instance.recordClassicResult(raw);
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(
+      AppRouter.gameOver,
+      arguments: recorded.result,
+    );
   }
 
   @override

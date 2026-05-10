@@ -4,10 +4,50 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app/app_colors.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
+import '../services/local_storage_service.dart';
 import '../widgets/secondary_button.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  Future<void> _confirmResetStats() async {
+    final go = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: AppColors.surfaceContainer,
+          title: Text('Reset Stats?', style: AppTextStyles.headline),
+          content: Text(
+            'This will clear your local scores and progress.',
+            style: AppTextStyles.body,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'Reset',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (go == true && mounted) {
+      await LocalStorageService.instance.resetStats();
+      if (mounted) setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +68,13 @@ class SettingsScreen extends StatelessWidget {
           Text(
             'Sound, haptics, and legal links will be grouped here.',
             style: AppTextStyles.caption,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Text('Data', style: AppTextStyles.title),
+          const SizedBox(height: AppSpacing.sm),
+          SecondaryButton(
+            label: 'Reset stats',
+            onPressed: _confirmResetStats,
           ),
           const SizedBox(height: AppSpacing.xl),
           Container(

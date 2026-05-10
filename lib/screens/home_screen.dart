@@ -5,16 +5,40 @@ import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
+import '../models/player_stats.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/bottom_banner_placeholder.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 import '../widgets/stat_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   static const String _logoAsset = 'assets/images/zippy_sum_logo.png';
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _statsReloadToken = 0;
+
+  void _reloadStats() {
+    setState(() => _statsReloadToken++);
+  }
+
+  Future<void> _openRoute(String route) async {
+    await Navigator.of(context).pushNamed(route);
+    if (mounted) _reloadStats();
+  }
+
+  Future<({PlayerStats stats, int streak})> _loadHome() async {
+    final stats = await LocalStorageService.instance.loadStats();
+    final streak = await LocalStorageService.instance
+        .getInt(LocalStorageService.keyDailyStreak);
+    return (stats: stats, streak: streak);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,16 +50,14 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: FutureBuilder<List<int>>(
-                future: Future.wait([
-                  LocalStorageService.instance
-                      .getInt(LocalStorageService.keyBestClassicScore),
-                  LocalStorageService.instance
-                      .getInt(LocalStorageService.keyDailyStreak),
-                ]),
+              child: FutureBuilder<({PlayerStats stats, int streak})>(
+                key: ValueKey(_statsReloadToken),
+                future: _loadHome(),
                 builder: (context, snapshot) {
-                  final best = snapshot.data?[0] ?? 0;
-                  final streak = snapshot.data?[1] ?? 0;
+                  final data = snapshot.data;
+                  final stats = data?.stats ?? PlayerStats.empty();
+                  final streakVal = data?.streak ?? 0;
+                  final best = stats.bestClassicScore;
 
                   return SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
@@ -47,7 +69,7 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         Center(
                           child: Image.asset(
-                            _logoAsset,
+                            HomeScreen._logoAsset,
                             height: 120,
                             fit: BoxFit.contain,
                             filterQuality: FilterQuality.high,
@@ -89,7 +111,9 @@ class HomeScreen extends StatelessWidget {
                             Expanded(
                               child: StatCard(
                                 title: 'Daily streak',
-                                value: streak == 1 ? '1 day' : '$streak days',
+                                value: streakVal == 1
+                                    ? '1 day'
+                                    : '$streakVal days',
                                 compact: true,
                                 accentTitle: true,
                               ),
@@ -100,32 +124,28 @@ class HomeScreen extends StatelessWidget {
                         PrimaryButton(
                           label: 'Play Classic',
                           large: true,
-                          onPressed: () => Navigator.of(context)
-                              .pushNamed(AppRouter.classicGame),
+                          onPressed: () => _openRoute(AppRouter.classicGame),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         SecondaryButton(
                           label: 'Daily Challenge',
-                          onPressed: () => Navigator.of(context)
-                              .pushNamed(AppRouter.dailyChallenge),
+                          onPressed: () =>
+                              _openRoute(AppRouter.dailyChallenge),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         SecondaryButton(
                           label: 'Stats',
-                          onPressed: () =>
-                              Navigator.of(context).pushNamed(AppRouter.stats),
+                          onPressed: () => _openRoute(AppRouter.stats),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         SecondaryButton(
                           label: 'How to Play',
-                          onPressed: () => Navigator.of(context)
-                              .pushNamed(AppRouter.howToPlay),
+                          onPressed: () => _openRoute(AppRouter.howToPlay),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         SecondaryButton(
                           label: 'Settings',
-                          onPressed: () => Navigator.of(context)
-                              .pushNamed(AppRouter.settings),
+                          onPressed: () => _openRoute(AppRouter.settings),
                         ),
                         const SizedBox(height: AppSpacing.lg),
                       ],
