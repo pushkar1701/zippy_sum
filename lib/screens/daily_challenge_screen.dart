@@ -155,9 +155,8 @@ class DailyChallengeScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Today (${DailySeed.dateKey(today)}): '
-                            'best ${scoreFmt.format(todayBest)}. '
-                            'Full history stays on device only.',
+                            '${dateFmt.format(today)} · best ${scoreFmt.format(todayBest)}. '
+                            'Your history stays on device only.',
                             style: AppTextStyles.caption,
                           ),
                         ),
