@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' show Random, min;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 
@@ -15,6 +16,8 @@ import '../models/game_result.dart';
 import '../services/haptics_service.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/number_tile.dart';
+import '../widgets/primary_button.dart';
+import '../widgets/secondary_button.dart';
 
 enum _PauseChoice { resume, restart, home }
 
@@ -95,10 +98,7 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
         state == AppLifecycleState.inactive) {
       _cancelRoundTimer();
     } else if (state == AppLifecycleState.resumed) {
-      if (mounted &&
-          !_paused &&
-          !_navigatedToGameOver &&
-          !_game.isRoundEnded) {
+      if (mounted && !_paused && !_navigatedToGameOver && !_game.isRoundEnded) {
         _startRoundTimer();
       }
     }
@@ -155,13 +155,13 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
         ),
       );
     } else {
-      final recorded =
-          await LocalStorageService.instance.recordClassicResult(raw);
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(
-        AppRouter.gameOver,
-        arguments: recorded.result,
+      final recorded = await LocalStorageService.instance.recordClassicResult(
+        raw,
       );
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushReplacementNamed(AppRouter.gameOver, arguments: recorded.result);
     }
   }
 
@@ -181,33 +181,83 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
     final choice = await showDialog<_PauseChoice>(
       context: context,
       barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surfaceContainer,
-          title: Text('Paused', style: AppTextStyles.headline),
-          content: Text(
-            'Timer is paused. What would you like to do?',
-            style: AppTextStyles.body,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(_PauseChoice.resume),
-              child: const Text('Resume'),
-            ),
-            TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(_PauseChoice.restart),
-              child: const Text('Restart'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(_PauseChoice.home),
-              child: Text(
-                'Home',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainer.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                  border: Border.all(
+                    color: AppColors.accentCyan.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'PAUSED',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.display.copyWith(
+                        fontSize: 26,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      'CURRENT SCORE: ${_game.score}',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.title.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'TIME LEFT: ${_formatTime(_game.remainingSeconds)}',
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.headline.copyWith(
+                        color: AppColors.accentCyan,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    PrimaryButton(
+                      label: 'RESUME',
+                      trailingIcon: Icons.play_arrow_rounded,
+                      onPressed: () =>
+                          Navigator.of(context).pop(_PauseChoice.resume),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SecondaryButton(
+                      label: 'RESTART',
+                      onPressed: () =>
+                          Navigator.of(context).pop(_PauseChoice.restart),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(_PauseChoice.home),
+                      child: Text(
+                        'HOME',
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.accentCyan,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -225,10 +275,9 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
       _startRoundTimer();
     } else if (choice == _PauseChoice.home) {
       setState(() => _paused = false);
-      Navigator.of(context).pushNamedAndRemoveUntil(
-        AppRouter.home,
-        (_) => false,
-      );
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
     } else {
       setState(() => _paused = false);
       if (!_game.isRoundEnded) _startRoundTimer();
@@ -245,20 +294,38 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
   Widget build(BuildContext context) {
     final models = _game.tileModels();
     final ended = _game.isRoundEnded;
-    final interactive =
-        !ended && !_paused && !_navigatedToGameOver;
+    final interactive = !ended && !_paused && !_navigatedToGameOver;
     final rem = _game.remainingSeconds;
     final timeWarn = rem > 0 && rem <= 10;
-    final scheme = Theme.of(context).colorScheme;
+    final mistake = _game.mistakeActive;
+    final matchReady =
+        interactive &&
+        !mistake &&
+        _game.target > 0 &&
+        _game.currentSum == _game.target &&
+        _game.currentSum > 0;
+    final roundProgress = _game.config.classicDurationSeconds > 0
+        ? rem / _game.config.classicDurationSeconds
+        : 0.0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.mode == GameMode.daily ? 'Daily' : 'Classic'),
+        title: Text(
+          widget.mode == GameMode.daily ? 'Daily' : 'ZippySum',
+          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w800),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_rounded),
+            onPressed: () =>
+                Navigator.of(context).pushNamed(AppRouter.settings),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Stack(
@@ -272,51 +339,54 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _HudRow(
-                    label1: 'Time',
-                    value1: _formatTime(rem),
-                    value1Color:
-                        timeWarn ? scheme.error : null,
-                    label2: 'Score',
-                    value2: '${_game.score}',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _HudPill(
+                          icon: Icons.schedule_rounded,
+                          label: 'TIME',
+                          value: _formatTime(rem),
+                          valueColor: timeWarn
+                              ? AppColors.error
+                              : AppColors.accentCyan,
+                          emphasize: timeWarn,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _HudPill(
+                          icon: Icons.stars_rounded,
+                          label: 'SCORE',
+                          value: '${_game.score}',
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _HudRow(
-                    label1: 'Combo',
-                    value1: 'x${_game.combo}',
-                    value1Widget: _comboAnimKey == 0
-                        ? Text(
-                            'x${_game.combo}',
-                            style: AppTextStyles.hudValue,
-                          )
-                        : TweenAnimationBuilder<double>(
-                            key: ValueKey(_comboAnimKey),
-                            tween: Tween(begin: 1.18, end: 1.0),
-                            duration: const Duration(milliseconds: 340),
-                            curve: Curves.elasticOut,
-                            builder: (context, scale, child) {
-                              return Transform.scale(
-                                scale: scale,
-                                alignment: Alignment.centerLeft,
-                                child: child,
-                              );
-                            },
-                            child: Text(
-                              'x${_game.combo}',
-                              style: AppTextStyles.hudValue,
-                            ),
-                          ),
-                    label2: 'Solved',
-                    value2: '${_game.solvedCount}',
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _ComboPill(
+                          combo: _game.combo,
+                          comboAnimKey: _comboAnimKey,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: _HudPill(
+                          label: 'SOLVED',
+                          value: '${_game.solvedCount}',
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  _TargetCard(target: _game.target),
-                  const SizedBox(height: AppSpacing.md),
-                  _CurrentSumPanel(
-                    sum: _game.currentSum,
+                  _TargetCard(
                     target: _game.target,
-                    tooHighColor: scheme.error,
+                    glowSuccess: _floatingPoints != null || matchReady,
                   ),
+                  const SizedBox(height: AppSpacing.md),
+                  _CurrentSumPanel(sum: _game.currentSum, target: _game.target),
                   const SizedBox(height: AppSpacing.md),
                   Expanded(
                     child: ScaleTransition(
@@ -339,20 +409,21 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate:
                                     const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  mainAxisSpacing: spacing,
-                                  crossAxisSpacing: spacing,
-                                  childAspectRatio: 1,
-                                ),
+                                      crossAxisCount: 4,
+                                      mainAxisSpacing: spacing,
+                                      crossAxisSpacing: spacing,
+                                      childAspectRatio: 1,
+                                    ),
                                 itemCount: models.length,
                                 itemBuilder: (context, index) {
+                                  final t = models[index];
                                   return NumberTile(
-                                    tile: models[index],
+                                    tile: t,
+                                    showMatchCheck: matchReady && t.isSelected,
                                     onTap: interactive
                                         ? () {
                                             unawaited(
-                                              HapticsService.instance
-                                                  .tileTap(),
+                                              HapticsService.instance.tileTap(),
                                             );
                                             _game.toggleTile(index);
                                           }
@@ -366,26 +437,53 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                       ),
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.sm),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: roundProgress.clamp(0.0, 1.0),
+                      minHeight: 4,
+                      backgroundColor: AppColors.surfaceContainerHighest,
+                      color: AppColors.accentCyan,
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed:
-                              interactive ? _game.clearSelection : null,
-                          child: const Text('Clear'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: FilledButton.tonal(
-                          onPressed: (ended || _navigatedToGameOver)
-                              ? null
-                              : _showPauseModal,
-                          child: const Text('Pause'),
-                        ),
-                      ),
-                    ],
+                  // Fixed height keeps [Expanded] grid size stable; mistake used to
+                  // inject a callout above the grid and shrink tiles (bad UX).
+                  SizedBox(
+                    height: 52,
+                    child: mistake && interactive
+                        ? PrimaryButton(
+                            label: 'CLEAR SELECTION',
+                            trailingIcon: Icons.refresh_rounded,
+                            onPressed: () => _game.clearSelection(),
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: interactive
+                                      ? _game.clearSelection
+                                      : null,
+                                  icon: const Icon(
+                                    Icons.clear_all_rounded,
+                                    size: 20,
+                                  ),
+                                  label: const Text('CLEAR'),
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: FilledButton.tonal(
+                                  onPressed: (ended || _navigatedToGameOver)
+                                      ? null
+                                      : _showPauseModal,
+                                  child: const Text('PAUSE'),
+                                ),
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),
@@ -395,16 +493,16 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                 child: IgnorePointer(
                   ignoring: true,
                   child: Align(
-                    alignment: const Alignment(0, -0.05),
+                    alignment: const Alignment(0, -0.08),
                     child: Text(
                       '+${_floatingPoints!}',
                       style: AppTextStyles.display.copyWith(
                         color: AppColors.accentCyan,
-                        fontSize: 32,
+                        fontSize: 36,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withValues(alpha: 0.45),
-                            blurRadius: 8,
+                            color: Colors.black.withValues(alpha: 0.5),
+                            blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
                         ],
@@ -420,14 +518,136 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
   }
 }
 
-class _TargetCard extends StatelessWidget {
-  const _TargetCard({required this.target});
+class _HudPill extends StatelessWidget {
+  const _HudPill({
+    required this.label,
+    required this.value,
+    this.icon,
+    this.valueColor,
+    this.emphasize = false,
+  });
 
-  final int target;
+  final String label;
+  final String value;
+  final IconData? icon;
+  final Color? valueColor;
+  final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: emphasize
+            ? AppColors.error.withValues(alpha: 0.12)
+            : AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        border: Border.all(
+          color: emphasize
+              ? AppColors.error.withValues(alpha: 0.65)
+              : AppColors.outline.withValues(alpha: 0.4),
+          width: emphasize ? 2 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 20, color: AppColors.accentCyan),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTextStyles.hudLabel),
+                Text(
+                  value,
+                  style: AppTextStyles.hudValue.copyWith(
+                    color: valueColor,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ComboPill extends StatelessWidget {
+  const _ComboPill({required this.combo, required this.comboAnimKey});
+
+  final int combo;
+  final int comboAnimKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final child = comboAnimKey == 0
+        ? Text(
+            'COMBO x$combo',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.tileNumber,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          )
+        : TweenAnimationBuilder<double>(
+            key: ValueKey(comboAnimKey),
+            tween: Tween(begin: 1.12, end: 1.0),
+            duration: const Duration(milliseconds: 340),
+            curve: Curves.elasticOut,
+            builder: (context, scale, c) {
+              return Transform.scale(scale: scale, child: c);
+            },
+            child: Text(
+              'COMBO x$combo',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.tileNumber,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
+            ),
+          );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.accentCyan,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentCyan.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: child,
+    );
+  }
+}
+
+class _TargetCard extends StatelessWidget {
+  const _TargetCard({required this.target, this.glowSuccess = false});
+
+  final int target;
+  final bool glowSuccess;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
@@ -437,19 +657,19 @@ class _TargetCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryPurple.withValues(alpha: 0.35),
+            AppColors.primaryPurple.withValues(alpha: 0.38),
             AppColors.surfaceContainerHigh,
           ],
         ),
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        border: Border.all(
-          color: AppColors.accentCyanDim,
-          width: 2,
-        ),
+        border: Border.all(color: AppColors.accentCyanDim, width: 2),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accentCyan.withValues(alpha: 0.12),
-            blurRadius: 24,
+            color: AppColors.accentCyan.withValues(
+              alpha: glowSuccess ? 0.45 : 0.15,
+            ),
+            blurRadius: glowSuccess ? 28 : 16,
+            spreadRadius: glowSuccess ? 2 : 0,
             offset: const Offset(0, 8),
           ),
         ],
@@ -467,18 +687,22 @@ class _TargetCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Tap tiles that add up',
-                  style: AppTextStyles.caption,
-                ),
+                Text('Tap tiles that add up', style: AppTextStyles.caption),
               ],
             ),
           ),
           Text(
             '$target',
             style: AppTextStyles.display.copyWith(
-              color: AppColors.accentCyan,
-              fontSize: 40,
+              color: Colors.white,
+              fontSize: 44,
+              fontWeight: FontWeight.w900,
+              shadows: [
+                Shadow(
+                  color: AppColors.accentCyan.withValues(alpha: 0.45),
+                  blurRadius: 12,
+                ),
+              ],
             ),
           ),
         ],
@@ -488,15 +712,10 @@ class _TargetCard extends StatelessWidget {
 }
 
 class _CurrentSumPanel extends StatelessWidget {
-  const _CurrentSumPanel({
-    required this.sum,
-    required this.target,
-    required this.tooHighColor,
-  });
+  const _CurrentSumPanel({required this.sum, required this.target});
 
   final int sum;
   final int target;
-  final Color tooHighColor;
 
   @override
   Widget build(BuildContext context) {
@@ -505,12 +724,14 @@ class _CurrentSumPanel extends StatelessWidget {
 
     final Color accent;
     if (over) {
-      accent = tooHighColor;
+      accent = AppColors.warningOrange;
     } else if (match) {
       accent = AppColors.accentCyan;
     } else {
       accent = AppColors.onSurfaceMuted;
     }
+
+    final progress = target > 0 ? (sum / target).clamp(0.0, 1.0) : 0.0;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -524,121 +745,49 @@ class _CurrentSumPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
         border: Border.all(
           color: over
-              ? tooHighColor.withValues(alpha: 0.65)
+              ? AppColors.warningOrange.withValues(alpha: 0.65)
               : AppColors.outline.withValues(alpha: 0.35),
           width: over ? 2 : 1,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(
-                'CURRENT SUM',
-                style: AppTextStyles.hudLabel,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('CURRENT SUM', style: AppTextStyles.hudLabel),
+                  const SizedBox(height: 2),
+                  Text(
+                    over
+                        ? 'Too high — tap off or Clear'
+                        : (match ? 'Nice!' : 'Keep tapping'),
+                    style: AppTextStyles.caption.copyWith(color: accent),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
+              const Spacer(),
               Text(
-                over ? 'Too high — tap off or Clear' : (match ? 'Nice!' : 'Keep tapping'),
-                style: AppTextStyles.caption.copyWith(color: accent),
+                '$sum',
+                style: AppTextStyles.display.copyWith(
+                  fontSize: 36,
+                  color: accent,
+                ),
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            '$sum',
-            style: AppTextStyles.display.copyWith(
-              fontSize: 36,
-              color: accent,
+          const SizedBox(height: AppSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+            child: LinearProgressIndicator(
+              value: over ? 1.0 : progress,
+              minHeight: 6,
+              backgroundColor: AppColors.surfaceContainerHighest,
+              color: over ? AppColors.warningOrange : AppColors.accentCyan,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HudRow extends StatelessWidget {
-  const _HudRow({
-    required this.label1,
-    required this.value1,
-    required this.label2,
-    required this.value2,
-    this.value1Color,
-    this.value1Widget,
-  });
-
-  final String label1;
-  final String value1;
-  final String label2;
-  final String value2;
-  final Color? value1Color;
-  final Widget? value1Widget;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _HudCell(
-            label: label1,
-            value: value1,
-            valueColor: value1Color,
-            valueWidget: value1Widget,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(child: _HudCell(label: label2, value: value2)),
-      ],
-    );
-  }
-}
-
-class _HudCell extends StatelessWidget {
-  const _HudCell({
-    required this.label,
-    required this.value,
-    this.valueColor,
-    this.valueWidget,
-  });
-
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final Widget? valueWidget;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
-      curve: Curves.easeOutCubic,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainer,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: valueColor != null
-              ? valueColor!.withValues(alpha: 0.55)
-              : AppColors.outline.withValues(alpha: 0.4),
-          width: valueColor != null ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label.toUpperCase(), style: AppTextStyles.hudLabel),
-          const SizedBox(height: 2),
-          valueWidget ??
-              Text(
-                value,
-                style: AppTextStyles.hudValue.copyWith(
-                  color: valueColor,
-                ),
-              ),
         ],
       ),
     );

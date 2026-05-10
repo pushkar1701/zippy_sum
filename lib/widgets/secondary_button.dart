@@ -6,11 +6,7 @@ import '../app/app_text_styles.dart';
 
 /// Cyan outline secondary action.
 class SecondaryButton extends StatelessWidget {
-  const SecondaryButton({
-    super.key,
-    required this.label,
-    this.onPressed,
-  });
+  const SecondaryButton({super.key, required this.label, this.onPressed});
 
   final String label;
   final VoidCallback? onPressed;

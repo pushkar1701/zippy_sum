@@ -9,7 +9,9 @@ import '../screens/daily_complete_screen.dart';
 import '../screens/game_over_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/how_to_play_screen.dart';
+import '../screens/offline_screen.dart';
 import '../screens/onboarding_screen.dart';
+import '../screens/privacy_choices_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/stats_screen.dart';
@@ -26,6 +28,8 @@ abstract final class AppRouter {
   static const String stats = '/stats';
   static const String howToPlay = '/how-to-play';
   static const String settings = '/settings';
+  static const String privacyChoices = '/privacy-choices';
+  static const String offline = '/offline';
 
   static const String initialRoute = splash;
 
@@ -40,6 +44,8 @@ abstract final class AppRouter {
     stats: (_) => const StatsScreen(),
     howToPlay: (_) => const HowToPlayScreen(),
     settings: (_) => const SettingsScreen(),
+    privacyChoices: (_) => const PrivacyChoicesScreen(),
+    offline: (_) => const OfflineScreen(),
   };
 
   static Widget _classicGameRoute(BuildContext context) {
@@ -50,8 +56,7 @@ abstract final class AppRouter {
 
   static Widget _gameOverRoute(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    final result =
-        args is GameResult ? args : GameResult.placeholder();
+    final result = args is GameResult ? args : GameResult.placeholder();
     return GameOverScreen(result: result);
   }
 

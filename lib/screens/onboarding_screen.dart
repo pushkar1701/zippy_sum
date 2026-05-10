@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_assets.dart';
 import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
@@ -34,12 +35,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: false,
       appBar: AppBar(
-        title: const Text('Welcome'),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: AppColors.background,
+        title: Text(
+          'Welcome',
+          style: AppTextStyles.title.copyWith(fontWeight: FontWeight.w700),
+        ),
         actions: [
           TextButton(
             onPressed: _complete,
-            child: const Text('Skip'),
+            child: Text(
+              'SKIP',
+              style: AppTextStyles.title.copyWith(
+                color: AppColors.accentCyan,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
         ],
       ),
@@ -49,9 +63,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: PageView(
               controller: _pageController,
               onPageChanged: (i) => setState(() => _page = i),
-              children: const [
+              children: [
                 _OnboardPage1(),
-                _OnboardPage2(),
+                const _OnboardPage2(),
                 _OnboardPage3(),
               ],
             ),
@@ -86,7 +100,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             child: _page < 2
                 ? PrimaryButton(
-                    label: 'Next',
+                    label: 'NEXT',
+                    trailingIcon: Icons.chevron_right_rounded,
                     onPressed: () {
                       _pageController.nextPage(
                         duration: const Duration(milliseconds: 280),
@@ -95,7 +110,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     },
                   )
                 : PrimaryButton(
-                    label: 'Start playing',
+                    label: 'START PLAYING',
+                    trailingIcon: Icons.chevron_right_rounded,
                     onPressed: _complete,
                   ),
           ),
@@ -115,6 +131,18 @@ class _OnboardPage1 extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Opacity(
+            opacity: 0.4,
+            child: Image.asset(
+              AppAssets.mark,
+              height: 56,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox(height: 8),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Hit the Target',
             style: AppTextStyles.headline,
@@ -257,16 +285,33 @@ class _OnboardPage3 extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Icon(
-                  Icons.calendar_month_rounded,
-                  size: 48,
-                  color: AppColors.accentCyan,
+                SizedBox(
+                  height: 56,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Opacity(
+                        opacity: 0.28,
+                        child: Image.asset(
+                          AppAssets.appIconSource,
+                          width: 56,
+                          height: 56,
+                          fit: BoxFit.contain,
+                          filterQuality: FilterQuality.high,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const SizedBox.shrink(),
+                        ),
+                      ),
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 48,
+                        color: AppColors.accentCyan,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Daily Challenge',
-                  style: AppTextStyles.title,
-                ),
+                Text('Daily Challenge', style: AppTextStyles.title),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Streak: 5 days · Today’s best: 320',

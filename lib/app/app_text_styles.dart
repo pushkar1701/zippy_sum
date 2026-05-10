@@ -12,6 +12,15 @@ abstract final class AppTextStyles {
     color: AppColors.onSurface,
   );
 
+  /// Screen titles (reference: cyan emphasis on headers).
+  static const TextStyle screenTitle = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.w800,
+    height: 1.2,
+    color: AppColors.accentCyan,
+    letterSpacing: 0.2,
+  );
+
   static const TextStyle headline = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w700,

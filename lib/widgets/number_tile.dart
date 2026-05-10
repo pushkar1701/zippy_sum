@@ -11,10 +11,12 @@ class NumberTile extends StatelessWidget {
     super.key,
     required this.tile,
     this.onTap,
+    this.showMatchCheck = false,
   });
 
   final TileModel tile;
   final VoidCallback? onTap;
+  final bool showMatchCheck;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +41,9 @@ class NumberTile extends StatelessWidget {
     }
 
     final style = AppTextStyles.numberTile.copyWith(color: fg);
-    final borderW = tile.isSelected || tile.state == TileState.mistake ? 2.0 : 1.0;
+    final borderW = tile.isSelected || tile.state == TileState.mistake
+        ? 2.0
+        : 1.0;
     final borderColor = switch (tile.state) {
       TileState.selected => AppColors.accentCyanDim,
       TileState.mistake => AppColors.error,
@@ -62,10 +66,7 @@ class NumberTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(AppSpacing.radiusTile),
-              border: Border.all(
-                color: borderColor,
-                width: borderW,
-              ),
+              border: Border.all(color: borderColor, width: borderW),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.25),
@@ -74,8 +75,34 @@ class NumberTile extends StatelessWidget {
                 ),
               ],
             ),
-            child: Center(
-              child: Text('${tile.value}', style: style),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Center(child: Text('${tile.value}', style: style)),
+                if (showMatchCheck && tile.isSelected)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentCyan,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 14,
+                        color: AppColors.tileNumber,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),

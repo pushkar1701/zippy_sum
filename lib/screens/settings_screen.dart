@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../services/haptics_service.dart';
 import '../services/local_storage_service.dart';
-import '../widgets/secondary_button.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -54,26 +54,56 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _confirmResetStats() async {
     final go = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (context) {
         return AlertDialog(
-          backgroundColor: AppColors.surfaceContainer,
-          title: Text('Reset Stats?', style: AppTextStyles.headline),
-          content: Text(
-            'This will clear your local scores and progress. '
-            'Onboarding will stay completed.',
-            style: AppTextStyles.body,
+          backgroundColor: AppColors.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 48,
+                color: AppColors.warningOrange,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'RESET STATS?',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.headline.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'This clears local scores and progress. '
+                'Onboarding stays completed.',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.body,
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.spaceEvenly,
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
               child: Text(
-                'Reset',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                'CANCEL',
+                style: AppTextStyles.title.copyWith(
+                  color: AppColors.onSurfaceMuted,
+                ),
               ),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('RESET STATS'),
             ),
           ],
         );
@@ -120,9 +150,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(
+          'Settings',
+          style: AppTextStyles.screenTitle.copyWith(fontSize: 18),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -150,31 +183,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onChanged: _setSound,
                 ),
                 const SizedBox(height: AppSpacing.xl),
+                Text('Privacy', style: AppTextStyles.headline),
+                const SizedBox(height: AppSpacing.sm),
+                ListTile(
+                  title: const Text('Privacy choices'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRouter.privacyChoices),
+                ),
+                const SizedBox(height: AppSpacing.xl),
                 Text('Support & legal', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.sm),
                 ListTile(
                   title: const Text('Privacy Policy'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _placeholderSheet(
                     'Privacy Policy',
                     'A full policy will be linked here before public release. '
-                    'Everything today stays on your device — no account, no cloud sync.',
+                        'Everything today stays on your device — no account, no cloud sync.',
                   ),
                 ),
                 ListTile(
                   title: const Text('Support'),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _placeholderSheet(
                     'Support',
                     'Contact options will be added before launch. Thanks for testing!',
                   ),
                 ),
+                ListTile(
+                  leading: Icon(
+                    Icons.wifi_off_rounded,
+                    color: AppColors.onSurfaceMuted,
+                  ),
+                  title: const Text('Offline info'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () =>
+                      Navigator.of(context).pushNamed(AppRouter.offline),
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 Text('Data', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.sm),
-                SecondaryButton(
-                  label: 'Reset stats',
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.radiusButton,
+                      ),
+                    ),
+                  ),
                   onPressed: _confirmResetStats,
+                  child: Text(
+                    'RESET STATS',
+                    style: AppTextStyles.title.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Center(

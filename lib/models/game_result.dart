@@ -10,8 +10,12 @@ class GameResult {
     required this.playedAt,
     this.isNewBestScore = false,
     this.bestScore = 0,
+
     /// Lifetime classic games completed after this round (set in [LocalStorageService.recordClassicResult]).
     this.classicCompletionsTotal = 0,
+
+    /// Prior best classic score when [isNewBestScore] is true; for UI delta only.
+    this.previousClassicBestBeforeRound,
   });
 
   final int score;
@@ -31,6 +35,9 @@ class GameResult {
 
   /// Total classic games completed after this round; used for interstitial cadence on game over.
   final int classicCompletionsTotal;
+
+  /// When this round set a new best, the previous lifetime best (for “was X → now Y” UI).
+  final int? previousClassicBestBeforeRound;
 
   /// Accuracy for display: `targetsSolved / (targetsSolved + mistakes)`, or 0.
   static double computeAccuracy({
@@ -53,6 +60,7 @@ class GameResult {
     bool? isNewBestScore,
     int? bestScore,
     int? classicCompletionsTotal,
+    int? previousClassicBestBeforeRound,
   }) {
     return GameResult(
       score: score ?? this.score,
@@ -66,6 +74,8 @@ class GameResult {
       bestScore: bestScore ?? this.bestScore,
       classicCompletionsTotal:
           classicCompletionsTotal ?? this.classicCompletionsTotal,
+      previousClassicBestBeforeRound:
+          previousClassicBestBeforeRound ?? this.previousClassicBestBeforeRound,
     );
   }
 

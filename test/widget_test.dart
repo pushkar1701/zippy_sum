@@ -13,9 +13,11 @@ void main() {
     });
   });
 
-  testWidgets('App loads and reaches home after splash', (WidgetTester tester) async {
+  testWidgets('App loads and reaches home after splash', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(const ZippySumApp());
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
     await tester.pumpAndSettle(const Duration(seconds: 2));
 

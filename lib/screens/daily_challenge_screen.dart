@@ -25,9 +25,12 @@ class DailyChallengeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Daily challenge'),
+        title: Text(
+          'DAILY CHALLENGE',
+          style: AppTextStyles.screenTitle.copyWith(fontSize: 16),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -67,12 +70,12 @@ class DailyChallengeScreen extends StatelessWidget {
                         children: [
                           Expanded(
                             child: StatCard(
-                              title: 'Daily streak',
+                              title: 'Current streak',
                               value: stats.dailyStreak == 0
                                   ? '—'
                                   : (stats.dailyStreak == 1
-                                      ? '1 day'
-                                      : '${stats.dailyStreak} days'),
+                                        ? '1 day'
+                                        : '${stats.dailyStreak} days'),
                               compact: true,
                               accentTitle: true,
                             ),
@@ -92,9 +95,37 @@ class DailyChallengeScreen extends StatelessWidget {
                         title: 'Best daily score',
                         value: scoreFmt.format(stats.bestDailyScore),
                       ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        'RECENT PUZZLES',
+                        style: AppTextStyles.hudLabel.copyWith(
+                          color: AppColors.accentCyan,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainer,
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusMd,
+                          ),
+                          border: Border.all(
+                            color: AppColors.outline.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Text(
+                          'Today (${DailySeed.dateKey(today)}): '
+                          'best ${scoreFmt.format(todayBest)}. '
+                          'Full history stays on device only.',
+                          style: AppTextStyles.caption,
+                        ),
+                      ),
                       const Spacer(),
                       PrimaryButton(
-                        label: 'Start Daily',
+                        label: 'START DAILY',
+                        trailingIcon: Icons.play_arrow_rounded,
                         onPressed: () {
                           Navigator.of(context).pushNamed(
                             AppRouter.classicGame,

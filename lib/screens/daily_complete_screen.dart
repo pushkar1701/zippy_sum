@@ -50,7 +50,10 @@ class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Daily'),
+        title: Text(
+          'Daily',
+          style: AppTextStyles.screenTitle.copyWith(fontSize: 18),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -64,20 +67,36 @@ class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(
-                      Icons.emoji_events_rounded,
-                      size: 72,
+                      Icons.check_circle_rounded,
+                      size: 64,
                       color: AppColors.accentCyan,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Daily complete',
-                      style: AppTextStyles.headline,
+                      'DAILY COMPLETE',
                       textAlign: TextAlign.center,
+                      style: AppTextStyles.screenTitle.copyWith(fontSize: 20),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      scoreFmt.format(r.score),
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.display.copyWith(
+                        fontSize: 44,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     _StatRow(
                       label: "Today's score",
                       value: scoreFmt.format(r.score),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: 'Daily streak',
+                      value: s.dailyStreak == 1
+                          ? '1 day'
+                          : '${s.dailyStreak} days',
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     _StatRow(
@@ -89,26 +108,10 @@ class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
                       label: 'Best daily score',
                       value: scoreFmt.format(s.bestDailyScore),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _StatRow(
-                      label: 'Daily streak',
-                      value: s.dailyStreak == 1
-                          ? '1 day'
-                          : '${s.dailyStreak} days',
-                    ),
                     const Spacer(),
                     PrimaryButton(
-                      label: 'Try again',
-                      onPressed: () {
-                        Navigator.of(context).pushReplacementNamed(
-                          AppRouter.classicGame,
-                          arguments: GameMode.daily,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    SecondaryButton(
-                      label: 'Play Classic',
+                      label: 'PLAY CLASSIC',
+                      trailingIcon: Icons.play_arrow_rounded,
                       onPressed: () {
                         Navigator.of(context).pushReplacementNamed(
                           AppRouter.classicGame,
@@ -117,14 +120,44 @@ class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
                       },
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    SecondaryButton(
-                      label: 'Home',
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SecondaryButton(
+                            label: 'MY STATS',
+                            onPressed: () {
+                              Navigator.of(context).pushNamed(AppRouter.stats);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: SecondaryButton(
+                            label: 'TRY AGAIN',
+                            onPressed: () {
+                              Navigator.of(context).pushReplacementNamed(
+                                AppRouter.classicGame,
+                                arguments: GameMode.daily,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextButton(
                       onPressed: () {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          AppRouter.home,
-                          (_) => false,
-                        );
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
                       },
+                      child: Text(
+                        'HOME',
+                        style: AppTextStyles.title.copyWith(
+                          color: AppColors.accentCyan,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -154,9 +187,7 @@ class _StatRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [

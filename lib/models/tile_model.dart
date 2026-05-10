@@ -1,11 +1,5 @@
 /// Visual/interaction state for a tile in the grid.
-enum TileState {
-  normal,
-  selected,
-  correct,
-  mistake,
-  disabled,
-}
+enum TileState { normal, selected, correct, mistake, disabled }
 
 /// One cell on the board for UI rendering (4×4 classic = 16 cells).
 ///

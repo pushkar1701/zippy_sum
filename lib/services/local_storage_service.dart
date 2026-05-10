@@ -131,6 +131,9 @@ class LocalStorageService {
       isNewBestScore: isNewBest,
       bestScore: updatedBestClassic,
       classicCompletionsTotal: newStats.totalGamesPlayed,
+      previousClassicBestBeforeRound: isNewBest
+          ? existing.bestClassicScore
+          : null,
     );
 
     return (stats: newStats, result: enriched);

@@ -26,7 +26,9 @@ class GameController {
   }) : _config = config {
     final rng = random ?? Random();
     _random = rng;
-    _sessionElapsedMs = initialSessionElapsedMs < 0 ? 0 : initialSessionElapsedMs;
+    _sessionElapsedMs = initialSessionElapsedMs < 0
+        ? 0
+        : initialSessionElapsedMs;
     _boardGenerator = boardGenerator ?? BoardGenerator(random: rng);
     _targetGenerator = targetGenerator ?? TargetGenerator(random: rng);
 

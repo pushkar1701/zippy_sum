@@ -47,10 +47,15 @@ void main() {
     });
 
     test('4. hasSeenOnboarding defaults to false', () async {
-      expect(await LocalStorageService.instance.getHasSeenOnboarding(), isFalse);
+      expect(
+        await LocalStorageService.instance.getHasSeenOnboarding(),
+        isFalse,
+      );
     });
 
-    testWidgets('5. Skip onboarding saves hasSeenOnboarding true', (tester) async {
+    testWidgets('5. Skip onboarding saves hasSeenOnboarding true', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
@@ -64,7 +69,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Skip'));
+      await tester.tap(find.text('SKIP'));
       await tester.pumpAndSettle();
 
       final p = await SharedPreferences.getInstance();
@@ -155,23 +160,29 @@ void main() {
       expect(game.remainingSeconds, 0);
     });
 
-    test('10. rescheduling periodic timer cancels prior (no duplicate ticks)', () async {
-      Timer? timer;
-      var ticks = 0;
-      void arm() {
+    test(
+      '10. rescheduling periodic timer cancels prior (no duplicate ticks)',
+      () async {
+        Timer? timer;
+        var ticks = 0;
+        void arm() {
+          timer?.cancel();
+          timer = Timer.periodic(
+            const Duration(milliseconds: 40),
+            (_) => ticks++,
+          );
+        }
+
+        arm();
+        arm();
+        await Future<void>.delayed(const Duration(milliseconds: 190));
         timer?.cancel();
-        timer = Timer.periodic(const Duration(milliseconds: 40), (_) => ticks++);
-      }
+        await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      arm();
-      arm();
-      await Future<void>.delayed(const Duration(milliseconds: 190));
-      timer?.cancel();
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-
-      // Single timer ~190/40 ≈ 4–5 ticks; stacked timers would roughly double.
-      expect(ticks, lessThan(8));
-      expect(ticks, greaterThan(1));
-    });
+        // Single timer ~190/40 ≈ 4–5 ticks; stacked timers would roughly double.
+        expect(ticks, lessThan(8));
+        expect(ticks, greaterThan(1));
+      },
+    );
   });
 }

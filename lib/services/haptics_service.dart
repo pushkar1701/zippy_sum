@@ -14,8 +14,7 @@ class HapticsService {
   }
 
   Future<bool> _enabled() async {
-    _cachedEnabled ??=
-        await LocalStorageService.instance.getHapticsEnabled();
+    _cachedEnabled ??= await LocalStorageService.instance.getHapticsEnabled();
     return _cachedEnabled!;
   }
 

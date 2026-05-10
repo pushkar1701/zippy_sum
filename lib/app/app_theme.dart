@@ -43,7 +43,9 @@ abstract final class AppTheme {
         centerTitle: true,
         backgroundColor: AppColors.surfaceContainer,
         foregroundColor: AppColors.onSurface,
-        titleTextStyle: AppTextStyles.title.copyWith(color: AppColors.onSurface),
+        titleTextStyle: AppTextStyles.title.copyWith(
+          color: AppColors.onSurface,
+        ),
         iconTheme: const IconThemeData(color: AppColors.onSurface),
       ),
       cardTheme: CardThemeData(

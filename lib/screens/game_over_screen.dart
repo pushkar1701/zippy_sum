@@ -46,7 +46,6 @@ class _GameOverScreenState extends State<GameOverScreen> {
     }
   }
 
-  /// Every 3rd completed classic game (not the 1st), after a short UI delay.
   Future<void> _maybeShowInterstitial() async {
     final n = widget.result.classicCompletionsTotal;
     if (n < 3 || n % 3 != 0) return;
@@ -64,6 +63,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
   Widget build(BuildContext context) {
     final scoreFormat = NumberFormat.decimalPattern();
     final result = widget.result;
+    final prev = result.previousClassicBestBeforeRound;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -81,114 +81,128 @@ class _GameOverScreenState extends State<GameOverScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
-                        vertical: AppSpacing.lg,
+                    if (result.isNewBestScore) ...[
+                      Icon(
+                        Icons.emoji_events_rounded,
+                        size: 48,
+                        color: AppColors.accentCyan,
                       ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusCard,
-                        ),
-                        gradient: const LinearGradient(
+                      const SizedBox(height: AppSpacing.sm),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
                           colors: [
-                            AppColors.primaryPurple,
+                            AppColors.accentCyan,
                             AppColors.primaryPurpleBright,
                           ],
+                        ).createShader(bounds),
+                        child: Text(
+                          'NEW BEST SCORE!',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.display.copyWith(
+                            fontSize: 24,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accentCyan.withValues(alpha: 0.15),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
                       ),
-                      child: Column(
-                        children: [
-                          Text(
-                            "TIME'S UP",
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.display.copyWith(
-                              color: Colors.white,
-                              fontSize: 28,
-                            ),
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        scoreFormat.format(result.score),
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.display.copyWith(
+                          fontSize: 42,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (prev != null) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(
+                          'PREVIOUS BEST ${scoreFormat.format(prev)}',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.caption,
+                        ),
+                        Text(
+                          '+${scoreFormat.format(result.score - prev)}',
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.headline.copyWith(
+                            color: AppColors.accentCyan,
+                            fontWeight: FontWeight.w800,
                           ),
-                          if (result.isNewBestScore) ...[
-                            const SizedBox(height: AppSpacing.sm),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: AppSpacing.md,
-                                vertical: AppSpacing.xs,
+                        ),
+                      ],
+                      const SizedBox(height: AppSpacing.md),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.lg,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.radiusCard,
+                          ),
+                          color: AppColors.surfaceContainer,
+                          border: Border.all(
+                            color: AppColors.accentCyan.withValues(alpha: 0.35),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.35),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              "TIME'S UP",
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.headline.copyWith(
+                                color: AppColors.accentCyan,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.2,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accentCyan.withValues(
-                                  alpha: 0.25,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppSpacing.radiusFull,
-                                ),
-                                border: Border.all(color: AppColors.accentCyan),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.emoji_events_rounded,
-                                    color: AppColors.accentCyan,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: AppSpacing.xs),
-                                  Text(
-                                    'NEW BEST SCORE',
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.accentCyan,
-                                      fontWeight: FontWeight.w800,
-                                      letterSpacing: 0.8,
-                                    ),
-                                  ),
-                                ],
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              scoreFormat.format(result.score),
+                              style: AppTextStyles.display.copyWith(
+                                fontSize: 40,
+                                fontWeight: FontWeight.w900,
                               ),
                             ),
                           ],
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            'Final score',
-                            style: AppTextStyles.caption.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
-                            ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    Expanded(
+                      child: GridView.count(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: AppSpacing.sm,
+                        crossAxisSpacing: AppSpacing.sm,
+                        childAspectRatio: 1.35,
+                        children: [
+                          _StatCell(
+                            label: 'BEST SCORE',
+                            value: scoreFormat.format(result.bestScore),
                           ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            scoreFormat.format(result.score),
-                            style: AppTextStyles.display.copyWith(
-                              color: AppColors.accentCyan,
-                              fontSize: 40,
-                            ),
+                          _StatCell(
+                            label: 'TARGETS SOLVED',
+                            value: '${result.targetsSolved}',
                           ),
+                          _StatCell(
+                            label: 'BEST COMBO',
+                            value: 'x${result.bestCombo}',
+                          ),
+                          _StatCell(label: 'ACCURACY', value: _accuracyLabel()),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _StatRow(
-                      label: 'Best score (all time)',
-                      value: scoreFormat.format(result.bestScore),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _StatRow(
-                      label: 'Targets solved',
-                      value: '${result.targetsSolved}',
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _StatRow(
-                      label: 'Best combo',
-                      value: 'x${result.bestCombo}',
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    _StatRow(label: 'Accuracy', value: _accuracyLabel()),
-                    const Spacer(),
                     PrimaryButton(
-                      label: 'Play again',
+                      label: 'PLAY AGAIN',
+                      trailingIcon: Icons.play_arrow_rounded,
                       onPressed: () {
                         Navigator.of(
                           context,
@@ -197,7 +211,7 @@ class _GameOverScreenState extends State<GameOverScreen> {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     SecondaryButton(
-                      label: 'Home',
+                      label: 'RETURN HOME',
                       onPressed: () {
                         Navigator.of(
                           context,
@@ -216,8 +230,8 @@ class _GameOverScreenState extends State<GameOverScreen> {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  const _StatRow({required this.label, required this.value});
+class _StatCell extends StatelessWidget {
+  const _StatCell({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -225,19 +239,31 @@ class _StatRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.md,
-      ),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(color: AppColors.outline.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.4)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(child: Text(label, style: AppTextStyles.body)),
-          Text(value, style: AppTextStyles.title),
+          Text(
+            label,
+            style: AppTextStyles.hudLabel.copyWith(
+              color: AppColors.accentCyan,
+              fontSize: 10,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: AppTextStyles.title.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );

@@ -13,10 +13,7 @@ class BoardGenerator {
 
   /// Flat row-major board of length `config.tileCount` (16 for default 4×4).
   List<int> randomFlatBoard(GameConfig config) {
-    return List<int>.generate(
-      config.tileCount,
-      (_) => _rollTile(config),
-    );
+    return List<int>.generate(config.tileCount, (_) => _rollTile(config));
   }
 
   int _rollTile(GameConfig config) {

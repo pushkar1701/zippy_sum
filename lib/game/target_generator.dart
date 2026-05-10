@@ -4,10 +4,8 @@ import 'game_config.dart';
 
 /// Describes which board cells were used to build the current target (always solvable).
 class TargetPick {
-  TargetPick({
-    required this.indices,
-    required this.sum,
-  }) : assert(indices.length >= 2);
+  TargetPick({required this.indices, required this.sum})
+    : assert(indices.length >= 2);
 
   /// Distinct cell indices (0-based, row-major), sorted ascending.
   final List<int> indices;
@@ -35,7 +33,9 @@ class TargetGenerator {
     int elapsedSecondsInRound,
   ) {
     if (board.length != config.tileCount) {
-      throw ArgumentError('Board length ${board.length} != ${config.tileCount}');
+      throw ArgumentError(
+        'Board length ${board.length} != ${config.tileCount}',
+      );
     }
 
     final k = _pickK(elapsedSecondsInRound);

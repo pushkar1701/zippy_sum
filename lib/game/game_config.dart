@@ -6,11 +6,12 @@ class GameConfig {
     this.maxTileValue = 9,
     this.classicDurationSeconds = 60,
     this.maxSpeedBonus = 75,
+
     /// Elapsed ms on current target at which speed bonus hits zero (linear decay).
     this.speedBonusZeroAtMs = 4000,
     this.comboBonusPerTier = 12,
   }) : assert(gridSize > 0),
-        assert(minTileValue <= maxTileValue);
+       assert(minTileValue <= maxTileValue);
 
   /// Edge length of the square grid (4 → 16 tiles).
   final int gridSize;

@@ -32,7 +32,8 @@ abstract final class Scoring {
   }) {
     const base = 100;
     final speed = speedBonus(config, elapsedMsSinceTarget);
-    final comboExtra = (comboBeforeSolve - 1).clamp(0, 999) * config.comboBonusPerTier;
+    final comboExtra =
+        (comboBeforeSolve - 1).clamp(0, 999) * config.comboBonusPerTier;
     return base + speed + comboExtra;
   }
 }

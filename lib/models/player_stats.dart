@@ -38,17 +38,17 @@ class PlayerStats {
   factory PlayerStats.empty() => const PlayerStats();
 
   Map<String, dynamic> toJson() => {
-        'bestClassicScore': bestClassicScore,
-        'totalGamesPlayed': totalGamesPlayed,
-        'totalTargetsSolved': totalTargetsSolved,
-        'totalMistakes': totalMistakes,
-        'bestCombo': bestCombo,
-        'lastPlayedAt': lastPlayedAt?.toIso8601String(),
-        'lastDailyDateString': lastDailyDateString,
-        'dailyStreak': dailyStreak,
-        'todayDailyBestScore': todayDailyBestScore,
-        'bestDailyScore': bestDailyScore,
-      };
+    'bestClassicScore': bestClassicScore,
+    'totalGamesPlayed': totalGamesPlayed,
+    'totalTargetsSolved': totalTargetsSolved,
+    'totalMistakes': totalMistakes,
+    'bestCombo': bestCombo,
+    'lastPlayedAt': lastPlayedAt?.toIso8601String(),
+    'lastDailyDateString': lastDailyDateString,
+    'dailyStreak': dailyStreak,
+    'todayDailyBestScore': todayDailyBestScore,
+    'bestDailyScore': bestDailyScore,
+  };
 
   factory PlayerStats.fromJson(Map<String, dynamic> json) {
     return PlayerStats(
@@ -62,8 +62,7 @@ class PlayerStats {
           : null,
       lastDailyDateString: json['lastDailyDateString'] as String?,
       dailyStreak: (json['dailyStreak'] as num?)?.toInt() ?? 0,
-      todayDailyBestScore:
-          (json['todayDailyBestScore'] as num?)?.toInt() ?? 0,
+      todayDailyBestScore: (json['todayDailyBestScore'] as num?)?.toInt() ?? 0,
       bestDailyScore: (json['bestDailyScore'] as num?)?.toInt() ?? 0,
     );
   }

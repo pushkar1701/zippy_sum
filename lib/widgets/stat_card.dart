@@ -23,7 +23,8 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final titleStyle = AppTextStyles.caption.copyWith(
       color: accentTitle ? AppColors.accentCyan : AppColors.onSurfaceMuted,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.5,
     );
     final valueStyle = compact
         ? AppTextStyles.title.copyWith(fontWeight: FontWeight.w800)
@@ -34,11 +35,11 @@ class StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        border: Border.all(color: AppColors.outline.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.accentCyan.withValues(alpha: 0.15)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
-            blurRadius: 12,
+            blurRadius: 14,
             offset: const Offset(0, 6),
           ),
         ],

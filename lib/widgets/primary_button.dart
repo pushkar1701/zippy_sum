@@ -4,23 +4,25 @@ import '../app/app_colors.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 
-/// Purple gradient primary CTA (Stitch-style).
+/// Purple gradient primary CTA (arcade board style).
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
     super.key,
     required this.label,
     this.onPressed,
     this.large = false,
+    this.trailingIcon,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final bool large;
+  final IconData? trailingIcon;
 
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null;
-    final height = large ? 56.0 : 48.0;
+    final height = large ? 56.0 : 52.0;
 
     return SizedBox(
       width: double.infinity,
@@ -46,21 +48,30 @@ class PrimaryButton extends StatelessWidget {
                 boxShadow: enabled
                     ? [
                         BoxShadow(
-                          color: AppColors.primaryPurple.withValues(alpha: 0.45),
-                          blurRadius: 14,
+                          color: AppColors.primaryPurple.withValues(alpha: 0.5),
+                          blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
                       ]
                     : null,
               ),
               child: Center(
-                child: Text(
-                  label,
-                  style: AppTextStyles.title.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label,
+                      style: AppTextStyles.title.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    if (trailingIcon != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Icon(trailingIcon, color: Colors.white, size: 22),
+                    ],
+                  ],
                 ),
               ),
             ),

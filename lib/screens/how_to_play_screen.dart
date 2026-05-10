@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
+import '../widgets/primary_button.dart';
 
 class HowToPlayScreen extends StatelessWidget {
   const HowToPlayScreen({super.key});
@@ -12,46 +14,69 @@ class HowToPlayScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('How to play'),
+        title: Text(
+          'How to Play',
+          style: AppTextStyles.screenTitle.copyWith(fontSize: 18),
+        ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      body: Column(
         children: [
-          Text('How to Play', style: AppTextStyles.display.copyWith(fontSize: 26)),
-          const SizedBox(height: AppSpacing.lg),
-          const _Step(
-            number: '1',
-            title: 'Look at the Target',
-            body: 'Find the number you need to make.',
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              children: [
+                Text(
+                  'How to Play',
+                  style: AppTextStyles.display.copyWith(fontSize: 26),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                const _Step(
+                  number: '1',
+                  title: 'Look at the Target',
+                  body: 'Find the number you need to make.',
+                ),
+                const _Step(
+                  number: '2',
+                  title: 'Pick Tiles',
+                  body: 'Tap numbers that add up to the target.',
+                ),
+                const _Step(
+                  number: '3',
+                  title: 'Go Fast',
+                  body: 'Solve quickly to build your combo.',
+                ),
+                const _Step(
+                  number: '4',
+                  title: 'Too High?',
+                  body: 'Tap tiles again or hit Clear.',
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                Text('Quick example', style: AppTextStyles.title),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Target 17 — tap 8, 5, and 4.', style: AppTextStyles.body),
+                const SizedBox(height: AppSpacing.md),
+                const _ExampleBoard(),
+              ],
+            ),
           ),
-          const _Step(
-            number: '2',
-            title: 'Pick Tiles',
-            body: 'Tap numbers that add up to the target.',
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: PrimaryButton(
+              label: 'GOT IT',
+              trailingIcon: Icons.check_rounded,
+              onPressed: () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                } else {
+                  Navigator.of(context).pushReplacementNamed(AppRouter.home);
+                }
+              },
+            ),
           ),
-          const _Step(
-            number: '3',
-            title: 'Go Fast',
-            body: 'Solve quickly to build your combo.',
-          ),
-          const _Step(
-            number: '4',
-            title: 'Too High?',
-            body: 'Tap tiles again or hit Clear.',
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Text('Quick example', style: AppTextStyles.title),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Target 17 — tap 8, 5, and 4.',
-            style: AppTextStyles.body,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _ExampleBoard(),
         ],
       ),
     );
@@ -59,11 +84,7 @@ class HowToPlayScreen extends StatelessWidget {
 }
 
 class _Step extends StatelessWidget {
-  const _Step({
-    required this.number,
-    required this.title,
-    required this.body,
-  });
+  const _Step({required this.number, required this.title, required this.body});
 
   final String number;
   final String title;
@@ -108,6 +129,8 @@ class _Step extends StatelessWidget {
 }
 
 class _ExampleBoard extends StatelessWidget {
+  const _ExampleBoard();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -115,7 +138,7 @@ class _ExampleBoard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-        border: Border.all(color: AppColors.outline.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.accentCyan.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -145,7 +168,7 @@ class _ExampleBoard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'That’s a clear — next target!',
+            'That clears it — next target!',
             style: AppTextStyles.caption,
             textAlign: TextAlign.center,
           ),
