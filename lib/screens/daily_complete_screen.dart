@@ -9,10 +9,11 @@ import '../models/daily_complete_args.dart';
 import '../models/game_mode.dart';
 import '../models/game_result.dart';
 import '../models/player_stats.dart';
+import '../services/haptics_service.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 
-class DailyCompleteScreen extends StatelessWidget {
+class DailyCompleteScreen extends StatefulWidget {
   const DailyCompleteScreen({super.key, required this.args});
 
   final DailyCompleteArgs args;
@@ -27,10 +28,23 @@ class DailyCompleteScreen extends StatelessWidget {
   }
 
   @override
+  State<DailyCompleteScreen> createState() => _DailyCompleteScreenState();
+}
+
+class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      HapticsService.instance.gameOver();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scoreFmt = NumberFormat.decimalPattern();
-    final r = args.result;
-    final s = args.stats;
+    final r = widget.args.result;
+    final s = widget.args.stats;
 
     return Scaffold(
       backgroundColor: AppColors.background,

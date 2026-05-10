@@ -4,7 +4,7 @@ import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
-import '../services/ads_service.dart';
+import '../services/local_storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,10 +20,14 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await AdsService.instance.initialize();
-      await Future<void>.delayed(const Duration(milliseconds: 900));
+      await Future<void>.delayed(const Duration(milliseconds: 700));
       if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed(AppRouter.home);
+      final seen =
+          await LocalStorageService.instance.getHasSeenOnboarding();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        seen ? AppRouter.home : AppRouter.onboarding,
+      );
     });
   }
 

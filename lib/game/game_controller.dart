@@ -19,6 +19,8 @@ class GameController {
     BoardGenerator? boardGenerator,
     TargetGenerator? targetGenerator,
     this.onChanged,
+    this.onCorrect,
+    this.onMistake,
     List<int>? debugInitialBoard,
     int initialSessionElapsedMs = 0,
   }) : _config = config {
@@ -51,6 +53,12 @@ class GameController {
 
   /// Optional notify hook for UI layers.
   void Function()? onChanged;
+
+  /// Fired after a correct solve with points earned this solve (before [onChanged]).
+  void Function(int pointsEarned)? onCorrect;
+
+  /// Fired when selection goes over the target (before [onChanged]).
+  void Function()? onMistake;
 
   late List<int> _board;
   final Set<int> _selected = <int>{};
@@ -217,6 +225,7 @@ class GameController {
       _mistakeActive = true;
       _mistakeCount++;
       _combo = 1;
+      onMistake?.call();
       _notify();
       return;
     }
@@ -246,6 +255,8 @@ class GameController {
     }
     _solvedCount++;
     _mistakeActive = false;
+
+    onCorrect?.call(gained);
 
     for (final i in List<int>.from(_selected)) {
       _board[i] = _rollTileValue();

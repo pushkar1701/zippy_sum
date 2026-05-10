@@ -9,6 +9,7 @@ import '../screens/daily_complete_screen.dart';
 import '../screens/game_over_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/how_to_play_screen.dart';
+import '../screens/onboarding_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/stats_screen.dart';
@@ -17,6 +18,7 @@ import '../screens/stats_screen.dart';
 abstract final class AppRouter {
   static const String splash = '/';
   static const String home = '/home';
+  static const String onboarding = '/onboarding';
   static const String classicGame = '/classic';
   static const String gameOver = '/game-over';
   static const String dailyChallenge = '/daily';
@@ -29,6 +31,7 @@ abstract final class AppRouter {
 
   static Map<String, WidgetBuilder> routes = {
     splash: (_) => const SplashScreen(),
+    onboarding: (_) => const OnboardingScreen(),
     home: (_) => const HomeScreen(),
     classicGame: _classicGameRoute,
     gameOver: _gameOverRoute,

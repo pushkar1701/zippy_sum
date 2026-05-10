@@ -6,22 +6,43 @@ import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../models/game_result.dart';
+import '../services/haptics_service.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 
-class GameOverScreen extends StatelessWidget {
+class GameOverScreen extends StatefulWidget {
   const GameOverScreen({super.key, required this.result});
 
   final GameResult result;
 
+  @override
+  State<GameOverScreen> createState() => _GameOverScreenState();
+}
+
+class _GameOverScreenState extends State<GameOverScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _playHaptics());
+  }
+
+  Future<void> _playHaptics() async {
+    await HapticsService.instance.gameOver();
+    if (!mounted) return;
+    if (widget.result.isNewBestScore) {
+      await HapticsService.instance.newBestScore();
+    }
+  }
+
   String _accuracyLabel() {
-    final pct = (result.accuracy * 100).clamp(0, 100);
+    final pct = (widget.result.accuracy * 100).clamp(0, 100);
     return '${pct.round()}%';
   }
 
   @override
   Widget build(BuildContext context) {
     final scoreFormat = NumberFormat.decimalPattern();
+    final result = widget.result;
 
     return Scaffold(
       backgroundColor: AppColors.background,

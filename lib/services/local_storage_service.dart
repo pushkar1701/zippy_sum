@@ -22,6 +22,10 @@ class LocalStorageService {
   /// Mirrors [PlayerStats.dailyStreak] for older readers.
   static const String keyDailyStreak = 'daily_streak';
 
+  static const String keyHasSeenOnboarding = 'has_seen_onboarding';
+  static const String keyHapticsEnabled = 'haptics_enabled';
+  static const String keySoundEffectsEnabled = 'sound_effects_enabled';
+
   Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 
   Future<int> getInt(String key, {int defaultValue = 0}) async {
@@ -33,6 +37,35 @@ class LocalStorageService {
     final p = await _prefs();
     await p.setInt(key, value);
   }
+
+  Future<bool> getBool(String key, {bool defaultValue = false}) async {
+    final p = await _prefs();
+    return p.getBool(key) ?? defaultValue;
+  }
+
+  Future<void> setBool(String key, bool value) async {
+    final p = await _prefs();
+    await p.setBool(key, value);
+  }
+
+  Future<bool> getHasSeenOnboarding() async =>
+      getBool(keyHasSeenOnboarding, defaultValue: false);
+
+  Future<void> setHasSeenOnboarding(bool value) async =>
+      setBool(keyHasSeenOnboarding, value);
+
+  /// Default on — players expect tactile feedback on phones.
+  Future<bool> getHapticsEnabled() async =>
+      getBool(keyHapticsEnabled, defaultValue: true);
+
+  Future<void> setHapticsEnabled(bool value) async =>
+      setBool(keyHapticsEnabled, value);
+
+  Future<bool> getSoundEffectsEnabled() async =>
+      getBool(keySoundEffectsEnabled, defaultValue: false);
+
+  Future<void> setSoundEffectsEnabled(bool value) async =>
+      setBool(keySoundEffectsEnabled, value);
 
   Future<PlayerStats> loadStats() async {
     final p = await _prefs();
