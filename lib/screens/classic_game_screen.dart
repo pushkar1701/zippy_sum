@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show Random, min;
 
 import 'package:flutter/material.dart';
 
@@ -6,16 +7,21 @@ import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
+import '../game/daily_seed.dart';
 import '../game/game_controller.dart';
+import '../models/daily_complete_args.dart';
+import '../models/game_mode.dart';
 import '../models/game_result.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/number_tile.dart';
 
 enum _PauseChoice { resume, restart, home }
 
-/// Classic timed round driven by [GameController] (no submit — sum = target to solve).
+/// Timed round: [GameMode.classic] or deterministic [GameMode.daily].
 class ClassicGameScreen extends StatefulWidget {
-  const ClassicGameScreen({super.key});
+  const ClassicGameScreen({super.key, this.mode = GameMode.classic});
+
+  final GameMode mode;
 
   @override
   State<ClassicGameScreen> createState() => _ClassicGameScreenState();
@@ -23,6 +29,7 @@ class ClassicGameScreen extends StatefulWidget {
 
 class _ClassicGameScreenState extends State<ClassicGameScreen> {
   late final GameController _game;
+  late final DateTime _sessionCalendarDay;
   Timer? _roundTimer;
   bool _paused = false;
   bool _navigatedToGameOver = false;
@@ -30,7 +37,14 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
   @override
   void initState() {
     super.initState();
-    _game = GameController(onChanged: _onGameChanged);
+    final n = DateTime.now();
+    _sessionCalendarDay = DateTime(n.year, n.month, n.day);
+    _game = GameController(
+      onChanged: _onGameChanged,
+      random: widget.mode == GameMode.daily
+          ? DailySeed.randomForDate(_sessionCalendarDay)
+          : Random(),
+    );
     _game.resetSession();
     _startRoundTimer();
   }
@@ -76,13 +90,28 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
       playedAt: DateTime.now(),
     );
 
-    final recorded =
-        await LocalStorageService.instance.recordClassicResult(raw);
-    if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(
-      AppRouter.gameOver,
-      arguments: recorded.result,
-    );
+    if (widget.mode == GameMode.daily) {
+      final recorded = await LocalStorageService.instance.recordDailyResult(
+        raw,
+        _sessionCalendarDay,
+      );
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        AppRouter.dailyComplete,
+        arguments: DailyCompleteArgs(
+          result: recorded.result,
+          stats: recorded.stats,
+        ),
+      );
+    } else {
+      final recorded =
+          await LocalStorageService.instance.recordClassicResult(raw);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(
+        AppRouter.gameOver,
+        arguments: recorded.result,
+      );
+    }
   }
 
   @override
@@ -168,7 +197,7 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Classic'),
+        title: Text(widget.mode == GameMode.daily ? 'Daily' : 'Classic'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
@@ -202,21 +231,40 @@ class _ClassicGameScreenState extends State<ClassicGameScreen> {
               _CurrentSumPanel(sum: _game.currentSum, target: _game.target),
               const SizedBox(height: AppSpacing.md),
               Expanded(
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4,
-                    mainAxisSpacing: AppSpacing.sm,
-                    crossAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 1,
-                  ),
-                  itemCount: models.length,
-                  itemBuilder: (context, index) {
-                    return NumberTile(
-                      tile: models[index],
-                      onTap: interactive
-                          ? () => _game.toggleTile(index)
-                          : null,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = AppSpacing.sm;
+                    final maxW = constraints.maxWidth;
+                    final maxH = constraints.maxHeight;
+                    final cellW = (maxW - 3 * spacing) / 4;
+                    final cellH = (maxH - 3 * spacing) / 4;
+                    final cell = min(cellW, cellH);
+                    final extent = 4 * cell + 3 * spacing;
+                    return Center(
+                      child: SizedBox(
+                        width: extent,
+                        height: extent,
+                        child: GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            mainAxisSpacing: spacing,
+                            crossAxisSpacing: spacing,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: models.length,
+                          itemBuilder: (context, index) {
+                            return NumberTile(
+                              tile: models[index],
+                              onTap: interactive
+                                  ? () => _game.toggleTile(index)
+                                  : null,
+                            );
+                          },
+                        ),
+                      ),
                     );
                   },
                 ),

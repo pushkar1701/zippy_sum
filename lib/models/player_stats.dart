@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-/// Persisted aggregates for Classic and related local progress (device-only).
+/// Persisted aggregates for Classic + Daily (device-only).
 class PlayerStats {
   const PlayerStats({
     this.bestClassicScore = 0,
@@ -9,6 +9,10 @@ class PlayerStats {
     this.totalMistakes = 0,
     this.bestCombo = 0,
     this.lastPlayedAt,
+    this.lastDailyDateString,
+    this.dailyStreak = 0,
+    this.todayDailyBestScore = 0,
+    this.bestDailyScore = 0,
   });
 
   final int bestClassicScore;
@@ -18,7 +22,13 @@ class PlayerStats {
   final int bestCombo;
   final DateTime? lastPlayedAt;
 
-  /// Lifetime: [totalTargetsSolved] / ([totalTargetsSolved] + [totalMistakes]), or 0.
+  /// [DailySeed.dateKey] for last completed daily, or null.
+  final String? lastDailyDateString;
+  final int dailyStreak;
+  final int todayDailyBestScore;
+  final int bestDailyScore;
+
+  /// Lifetime classic: [totalTargetsSolved] / ([totalTargetsSolved] + [totalMistakes]), or 0.
   double get averageAccuracy {
     final d = totalTargetsSolved + totalMistakes;
     if (d == 0) return 0;
@@ -34,6 +44,10 @@ class PlayerStats {
         'totalMistakes': totalMistakes,
         'bestCombo': bestCombo,
         'lastPlayedAt': lastPlayedAt?.toIso8601String(),
+        'lastDailyDateString': lastDailyDateString,
+        'dailyStreak': dailyStreak,
+        'todayDailyBestScore': todayDailyBestScore,
+        'bestDailyScore': bestDailyScore,
       };
 
   factory PlayerStats.fromJson(Map<String, dynamic> json) {
@@ -46,6 +60,11 @@ class PlayerStats {
       lastPlayedAt: json['lastPlayedAt'] != null
           ? DateTime.tryParse(json['lastPlayedAt'] as String)
           : null,
+      lastDailyDateString: json['lastDailyDateString'] as String?,
+      dailyStreak: (json['dailyStreak'] as num?)?.toInt() ?? 0,
+      todayDailyBestScore:
+          (json['todayDailyBestScore'] as num?)?.toInt() ?? 0,
+      bestDailyScore: (json['bestDailyScore'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -63,6 +82,10 @@ class PlayerStats {
     int? totalMistakes,
     int? bestCombo,
     DateTime? lastPlayedAt,
+    String? lastDailyDateString,
+    int? dailyStreak,
+    int? todayDailyBestScore,
+    int? bestDailyScore,
   }) {
     return PlayerStats(
       bestClassicScore: bestClassicScore ?? this.bestClassicScore,
@@ -71,6 +94,10 @@ class PlayerStats {
       totalMistakes: totalMistakes ?? this.totalMistakes,
       bestCombo: bestCombo ?? this.bestCombo,
       lastPlayedAt: lastPlayedAt ?? this.lastPlayedAt,
+      lastDailyDateString: lastDailyDateString ?? this.lastDailyDateString,
+      dailyStreak: dailyStreak ?? this.dailyStreak,
+      todayDailyBestScore: todayDailyBestScore ?? this.todayDailyBestScore,
+      bestDailyScore: bestDailyScore ?? this.bestDailyScore,
     );
   }
 }

@@ -44,6 +44,10 @@ void main() {
       expect(s.totalMistakes, 0);
       expect(s.bestCombo, 0);
       expect(s.lastPlayedAt, isNull);
+      expect(s.lastDailyDateString, isNull);
+      expect(s.dailyStreak, 0);
+      expect(s.todayDailyBestScore, 0);
+      expect(s.bestDailyScore, 0);
     });
 
     test('2. averageAccuracy returns 0 when there are no attempts', () {
@@ -186,6 +190,10 @@ void main() {
       expect(s.totalMistakes, 0);
       expect(s.bestCombo, 0);
       expect(s.lastPlayedAt, isNull);
+      expect(s.lastDailyDateString, isNull);
+      expect(s.dailyStreak, 0);
+      expect(s.todayDailyBestScore, 0);
+      expect(s.bestDailyScore, 0);
 
       final p = await SharedPreferences.getInstance();
       expect(p.getString(LocalStorageService.keyPlayerStats), isNull);

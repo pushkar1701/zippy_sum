@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
+import '../app/app_text_styles.dart';
+import '../game/daily_seed.dart';
+import '../models/game_mode.dart';
+import '../models/player_stats.dart';
+import '../services/local_storage_service.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
+import '../widgets/stat_card.dart';
 import '../widgets/zippy_header.dart';
 
 class DailyChallengeScreen extends StatelessWidget {
@@ -12,6 +19,8 @@ class DailyChallengeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dateFmt = DateFormat.yMMMMd();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -21,38 +30,82 @@ class DailyChallengeScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const ZippyHeader(
-              title: "Today's puzzle",
-              subtitle: 'One fresh board every day. Placeholder flow for now.',
-              showAccentLine: true,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: Center(
-                child: Icon(
-                  Icons.calendar_month_rounded,
-                  size: 72,
-                  color: AppColors.accentCyan.withValues(alpha: 0.5),
+      body: FutureBuilder<PlayerStats>(
+        future: LocalStorageService.instance.loadStats(),
+        builder: (context, snapshot) {
+          final stats = snapshot.data ?? PlayerStats.empty();
+          final scoreFmt = NumberFormat.decimalPattern();
+          final today = DateTime.now();
+          final todayKey = DailySeed.dateKey(today);
+          final todayBest = stats.lastDailyDateString == todayKey
+              ? stats.todayDailyBestScore
+              : 0;
+
+          return Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const ZippyHeader(
+                  title: "Today's puzzle",
+                  subtitle: 'One seeded board per calendar day.',
+                  showAccentLine: true,
                 ),
-              ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  dateFmt.format(today),
+                  style: AppTextStyles.title,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        title: 'Daily streak',
+                        value: stats.dailyStreak == 0
+                            ? '—'
+                            : (stats.dailyStreak == 1
+                                ? '1 day'
+                                : '${stats.dailyStreak} days'),
+                        compact: true,
+                        accentTitle: true,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: StatCard(
+                        title: "Today's best",
+                        value: scoreFmt.format(todayBest),
+                        compact: true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                StatCard(
+                  title: 'Best daily score',
+                  value: scoreFmt.format(stats.bestDailyScore),
+                ),
+                const Spacer(),
+                PrimaryButton(
+                  label: 'Start Daily',
+                  onPressed: () {
+                    Navigator.of(context).pushNamed(
+                      AppRouter.classicGame,
+                      arguments: GameMode.daily,
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                SecondaryButton(
+                  label: 'Back',
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
             ),
-            PrimaryButton(
-              label: 'Start (placeholder)',
-              onPressed: () => Navigator.of(context)
-                  .pushReplacementNamed(AppRouter.dailyComplete),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            SecondaryButton(
-              label: 'Back',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

@@ -2,8 +2,10 @@ import 'dart:math' show max;
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/daily_seed.dart';
 import '../models/game_result.dart';
 import '../models/player_stats.dart';
+import 'daily_streak_logic.dart';
 
 /// Local persistence via [SharedPreferences] (stats + legacy keys).
 class LocalStorageService {
@@ -17,7 +19,7 @@ class LocalStorageService {
   static const String keyBestClassicScore = 'best_classic_score';
   static const String keyGamesPlayed = 'games_played';
 
-  /// Consecutive days with a completed daily (placeholder; not synced).
+  /// Mirrors [PlayerStats.dailyStreak] for older readers.
   static const String keyDailyStreak = 'daily_streak';
 
   Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
@@ -44,12 +46,14 @@ class LocalStorageService {
     }
     final best = p.getInt(keyBestClassicScore) ?? 0;
     final played = p.getInt(keyGamesPlayed) ?? 0;
-    if (best == 0 && played == 0) {
+    final streak = p.getInt(keyDailyStreak) ?? 0;
+    if (best == 0 && played == 0 && streak == 0) {
       return PlayerStats.empty();
     }
     return PlayerStats.empty().copyWith(
       bestClassicScore: best,
       totalGamesPlayed: played,
+      dailyStreak: streak,
     );
   }
 
@@ -58,6 +62,7 @@ class LocalStorageService {
     await p.setString(keyPlayerStats, stats.toJsonString());
     await p.setInt(keyBestClassicScore, stats.bestClassicScore);
     await p.setInt(keyGamesPlayed, stats.totalGamesPlayed);
+    await p.setInt(keyDailyStreak, stats.dailyStreak);
   }
 
   Future<void> resetStats() async {
@@ -92,6 +97,44 @@ class LocalStorageService {
     final enriched = result.copyWith(
       isNewBestScore: isNewBest,
       bestScore: updatedBestClassic,
+    );
+
+    return (stats: newStats, result: enriched);
+  }
+
+  /// Updates daily-only fields; does not change classic aggregates.
+  Future<({PlayerStats stats, GameResult result})> recordDailyResult(
+    GameResult result,
+    DateTime date,
+  ) async {
+    final existing = await loadStats();
+    final todayKey = DailySeed.dateKey(date);
+
+    final newStreak = computeNextDailyStreak(
+      completionDate: date,
+      lastDailyDateString: existing.lastDailyDateString,
+      previousStreak: existing.dailyStreak,
+    );
+
+    final todayBaseline = existing.lastDailyDateString == todayKey
+        ? existing.todayDailyBestScore
+        : 0;
+    final newTodayBest = max(todayBaseline, result.score);
+    final newBestDaily = max(existing.bestDailyScore, result.score);
+
+    final newStats = existing.copyWith(
+      lastDailyDateString: todayKey,
+      dailyStreak: newStreak,
+      todayDailyBestScore: newTodayBest,
+      bestDailyScore: newBestDaily,
+      lastPlayedAt: result.playedAt,
+    );
+
+    await saveStats(newStats);
+
+    final enriched = result.copyWith(
+      bestScore: newBestDaily,
+      isNewBestScore: false,
     );
 
     return (stats: newStats, result: enriched);

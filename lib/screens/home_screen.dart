@@ -33,12 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) _reloadStats();
   }
 
-  Future<({PlayerStats stats, int streak})> _loadHome() async {
-    final stats = await LocalStorageService.instance.loadStats();
-    final streak = await LocalStorageService.instance
-        .getInt(LocalStorageService.keyDailyStreak);
-    return (stats: stats, streak: streak);
-  }
+  Future<PlayerStats> _loadHome() =>
+      LocalStorageService.instance.loadStats();
 
   @override
   Widget build(BuildContext context) {
@@ -50,13 +46,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Expanded(
-              child: FutureBuilder<({PlayerStats stats, int streak})>(
+              child: FutureBuilder<PlayerStats>(
                 key: ValueKey(_statsReloadToken),
                 future: _loadHome(),
                 builder: (context, snapshot) {
-                  final data = snapshot.data;
-                  final stats = data?.stats ?? PlayerStats.empty();
-                  final streakVal = data?.streak ?? 0;
+                  final stats = snapshot.data ?? PlayerStats.empty();
+                  final streakVal = stats.dailyStreak;
                   final best = stats.bestClassicScore;
 
                   return SingleChildScrollView(
@@ -111,9 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             Expanded(
                               child: StatCard(
                                 title: 'Daily streak',
-                                value: streakVal == 1
-                                    ? '1 day'
-                                    : '$streakVal days',
+                                value: streakVal == 0
+                                    ? '—'
+                                    : (streakVal == 1
+                                        ? '1 day'
+                                        : '$streakVal days'),
                                 compact: true,
                                 accentTitle: true,
                               ),
