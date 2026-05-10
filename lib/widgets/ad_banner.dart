@@ -4,8 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../services/ad_ids.dart';
+import '../services/consent_service.dart';
 
-/// Bottom banner using Google test ad units; hidden until loaded or if load fails.
+/// Bottom adaptive banner. Consent-gated, collapses cleanly on failure.
+///
+/// Allowed placements: Home, Game Over, Daily Challenge, Daily Complete.
+/// Must NOT be placed on the active gameplay screen, pause modal, or onboarding.
 class AdBanner extends StatefulWidget {
   const AdBanner({super.key});
 
@@ -20,15 +24,17 @@ class _AdBannerState extends State<AdBanner> {
   @override
   void initState() {
     super.initState();
-    if (!AdIds.adsSupported || AdIds.bannerAdUnitId.isEmpty) {
-      return;
-    }
+    if (!AdIds.adsSupported || AdIds.bannerAdUnitId.isEmpty) return;
     WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_load()));
   }
 
   Future<void> _load() async {
     if (!mounted) return;
     if (!AdIds.adsSupported || AdIds.bannerAdUnitId.isEmpty) return;
+
+    // Consent gate — do not request the ad without user permission.
+    final allowed = await ConsentService.instance.canRequestAds();
+    if (!allowed || !mounted) return;
 
     final width = MediaQuery.sizeOf(context).width.truncate();
     AdSize size;
@@ -54,6 +60,7 @@ class _AdBannerState extends State<AdBanner> {
           unawaited(_refreshHeight(b));
         },
         onAdFailedToLoad: (ad, error) {
+          // Dispose and stay collapsed — no broken placeholder.
           ad.dispose();
         },
       ),
@@ -70,11 +77,9 @@ class _AdBannerState extends State<AdBanner> {
     try {
       final platformSize = await ad.getPlatformAdSize();
       if (!mounted || platformSize == null) return;
-      setState(() {
-        _height = platformSize.height.toDouble();
-      });
+      setState(() => _height = platformSize.height.toDouble());
     } catch (_) {
-      // Keep adaptive height from request.
+      // Keep the height from the original request.
     }
   }
 
@@ -91,9 +96,7 @@ class _AdBannerState extends State<AdBanner> {
   @override
   Widget build(BuildContext context) {
     final ad = _banner;
-    if (ad == null || _height <= 0) {
-      return const SizedBox.shrink();
-    }
+    if (ad == null || _height <= 0) return const SizedBox.shrink();
     return SafeArea(
       top: false,
       child: Container(

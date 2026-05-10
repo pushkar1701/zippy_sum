@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_links.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
+import '../services/consent_service.dart';
 import '../services/haptics_service.dart';
 import '../services/local_storage_service.dart';
 
@@ -108,33 +111,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  void _placeholderSheet(String title, String body) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.surfaceContainer,
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: AppTextStyles.headline),
-              const SizedBox(height: AppSpacing.md),
-              Text(body, style: AppTextStyles.body),
-              const SizedBox(height: AppSpacing.lg),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
-                ),
-              ),
-            ],
+  Future<void> _openPrivacyChoices() async {
+    final required = await ConsentService.instance.isPrivacyOptionsRequired();
+    if (!mounted) return;
+    if (!required) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Privacy options are not required right now.',
+            style: AppTextStyles.caption.copyWith(color: Colors.white),
           ),
-        );
-      },
-    );
+          backgroundColor: AppColors.surfaceContainerHigh,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await ConsentService.instance.showPrivacyOptionsForm();
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not open $url',
+            style: AppTextStyles.caption.copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.surfaceContainerHigh,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -193,8 +203,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   minVerticalPadding: AppSpacing.sm,
                   title: const Text('Privacy choices'),
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () =>
-                      Navigator.of(context).pushNamed(AppRouter.privacyChoices),
+                  onTap: () => Navigator.of(context).pushNamed(
+                    AppRouter.privacyChoices,
+                  ),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: AppSpacing.sm,
+                  title: const Text('Manage ad choices'),
+                  subtitle: const Text('GDPR / CCPA consent'),
+                  trailing: const Icon(Icons.tune_rounded, size: 18),
+                  onTap: _openPrivacyChoices,
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text('Support & legal', style: AppTextStyles.headline),
@@ -203,22 +222,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   contentPadding: EdgeInsets.zero,
                   minVerticalPadding: AppSpacing.sm,
                   title: const Text('Privacy Policy'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _placeholderSheet(
-                    'Privacy Policy',
-                    'A full policy will be linked here before public release. '
-                        'Everything today stays on your device — no account, no cloud sync.',
-                  ),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                  onTap: () => _launchUrl(AppLinks.privacyPolicy),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   minVerticalPadding: AppSpacing.sm,
                   title: const Text('Support'),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _placeholderSheet(
-                    'Support',
-                    'Contact options will be added before launch. Thanks for testing!',
-                  ),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                  onTap: () => _launchUrl(AppLinks.support),
                 ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
