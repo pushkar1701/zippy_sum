@@ -10,6 +10,7 @@ import '../models/game_mode.dart';
 import '../models/game_result.dart';
 import '../models/player_stats.dart';
 import '../services/haptics_service.dart';
+import '../widgets/ad_banner.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 
@@ -53,74 +54,84 @@ class _DailyCompleteScreenState extends State<DailyCompleteScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Icon(
-                Icons.emoji_events_rounded,
-                size: 72,
-                color: AppColors.accentCyan,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      size: 72,
+                      color: AppColors.accentCyan,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Daily complete',
+                      style: AppTextStyles.headline,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _StatRow(
+                      label: "Today's score",
+                      value: scoreFmt.format(r.score),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: "Today's best",
+                      value: scoreFmt.format(s.todayDailyBestScore),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: 'Best daily score',
+                      value: scoreFmt.format(s.bestDailyScore),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: 'Daily streak',
+                      value: s.dailyStreak == 1
+                          ? '1 day'
+                          : '${s.dailyStreak} days',
+                    ),
+                    const Spacer(),
+                    PrimaryButton(
+                      label: 'Try again',
+                      onPressed: () {
+                        Navigator.of(context).pushReplacementNamed(
+                          AppRouter.classicGame,
+                          arguments: GameMode.daily,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SecondaryButton(
+                      label: 'Play Classic',
+                      onPressed: () {
+                        Navigator.of(context).pushReplacementNamed(
+                          AppRouter.classicGame,
+                          arguments: GameMode.classic,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SecondaryButton(
+                      label: 'Home',
+                      onPressed: () {
+                        Navigator.of(context).pushNamedAndRemoveUntil(
+                          AppRouter.home,
+                          (_) => false,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Daily complete',
-                style: AppTextStyles.headline,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _StatRow(
-                label: "Today's score",
-                value: scoreFmt.format(r.score),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(
-                label: "Today's best",
-                value: scoreFmt.format(s.todayDailyBestScore),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(
-                label: 'Best daily score',
-                value: scoreFmt.format(s.bestDailyScore),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(
-                label: 'Daily streak',
-                value: s.dailyStreak == 1 ? '1 day' : '${s.dailyStreak} days',
-              ),
-              const Spacer(),
-              PrimaryButton(
-                label: 'Try again',
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(
-                    AppRouter.classicGame,
-                    arguments: GameMode.daily,
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SecondaryButton(
-                label: 'Play Classic',
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(
-                    AppRouter.classicGame,
-                    arguments: GameMode.classic,
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SecondaryButton(
-                label: 'Home',
-                onPressed: () {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    AppRouter.home,
-                    (_) => false,
-                  );
-                },
-              ),
-            ],
-          ),
+            ),
+            const AdBanner(),
+          ],
         ),
       ),
     );

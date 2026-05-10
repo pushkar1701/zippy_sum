@@ -10,6 +10,8 @@ class GameResult {
     required this.playedAt,
     this.isNewBestScore = false,
     this.bestScore = 0,
+    /// Lifetime classic games completed after this round (set in [LocalStorageService.recordClassicResult]).
+    this.classicCompletionsTotal = 0,
   });
 
   final int score;
@@ -26,6 +28,9 @@ class GameResult {
 
   /// Lifetime best classic score after this round (filled when recording to storage).
   final int bestScore;
+
+  /// Total classic games completed after this round; used for interstitial cadence on game over.
+  final int classicCompletionsTotal;
 
   /// Accuracy for display: `targetsSolved / (targetsSolved + mistakes)`, or 0.
   static double computeAccuracy({
@@ -47,6 +52,7 @@ class GameResult {
     DateTime? playedAt,
     bool? isNewBestScore,
     int? bestScore,
+    int? classicCompletionsTotal,
   }) {
     return GameResult(
       score: score ?? this.score,
@@ -58,6 +64,8 @@ class GameResult {
       playedAt: playedAt ?? this.playedAt,
       isNewBestScore: isNewBestScore ?? this.isNewBestScore,
       bestScore: bestScore ?? this.bestScore,
+      classicCompletionsTotal:
+          classicCompletionsTotal ?? this.classicCompletionsTotal,
     );
   }
 

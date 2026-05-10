@@ -7,7 +7,7 @@ import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../models/player_stats.dart';
 import '../services/local_storage_service.dart';
-import '../widgets/bottom_banner_placeholder.dart';
+import '../widgets/ad_banner.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 import '../widgets/stat_card.dart';
@@ -151,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            const BottomBannerPlaceholder(),
+            const AdBanner(),
           ],
         ),
       ),

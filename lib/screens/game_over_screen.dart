@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -6,7 +8,9 @@ import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../app/app_text_styles.dart';
 import '../models/game_result.dart';
+import '../services/ads_service.dart';
 import '../services/haptics_service.dart';
+import '../widgets/ad_banner.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 
@@ -23,7 +27,15 @@ class _GameOverScreenState extends State<GameOverScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _playHaptics());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_afterFirstFrame());
+    });
+  }
+
+  Future<void> _afterFirstFrame() async {
+    await _playHaptics();
+    if (!mounted) return;
+    await _maybeShowInterstitial();
   }
 
   Future<void> _playHaptics() async {
@@ -32,6 +44,15 @@ class _GameOverScreenState extends State<GameOverScreen> {
     if (widget.result.isNewBestScore) {
       await HapticsService.instance.newBestScore();
     }
+  }
+
+  /// Every 3rd completed classic game (not the 1st), after a short UI delay.
+  Future<void> _maybeShowInterstitial() async {
+    final n = widget.result.classicCompletionsTotal;
+    if (n < 3 || n % 3 != 0) return;
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
+    await AdsService.instance.showInterstitialIfReady();
   }
 
   String _accuracyLabel() {
@@ -51,132 +72,144 @@ class _GameOverScreenState extends State<GameOverScreen> {
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.lg,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusCard),
-                  gradient: const LinearGradient(
-                    colors: [
-                      AppColors.primaryPurple,
-                      AppColors.primaryPurpleBright,
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accentCyan.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      "TIME'S UP",
-                      textAlign: TextAlign.center,
-                      style: AppTextStyles.display.copyWith(
-                        color: Colors.white,
-                        fontSize: 28,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.lg,
                       ),
-                    ),
-                    if (result.isNewBestScore) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.xs,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusCard,
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentCyan.withValues(alpha: 0.25),
-                          borderRadius:
-                              BorderRadius.circular(AppSpacing.radiusFull),
-                          border: Border.all(color: AppColors.accentCyan),
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.primaryPurple,
+                            AppColors.primaryPurpleBright,
+                          ],
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.emoji_events_rounded,
-                              color: AppColors.accentCyan,
-                              size: 20,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.accentCyan.withValues(alpha: 0.15),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            "TIME'S UP",
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.display.copyWith(
+                              color: Colors.white,
+                              fontSize: 28,
                             ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              'NEW BEST SCORE',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.accentCyan,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.8,
+                          ),
+                          if (result.isNewBestScore) ...[
+                            const SizedBox(height: AppSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.md,
+                                vertical: AppSpacing.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentCyan.withValues(
+                                  alpha: 0.25,
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.radiusFull,
+                                ),
+                                border: Border.all(color: AppColors.accentCyan),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.emoji_events_rounded,
+                                    color: AppColors.accentCyan,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Text(
+                                    'NEW BEST SCORE',
+                                    style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.accentCyan,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Final score',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            'Final score',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white.withValues(alpha: 0.9),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            scoreFormat.format(result.score),
+                            style: AppTextStyles.display.copyWith(
+                              color: AppColors.accentCyan,
+                              fontSize: 40,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      scoreFormat.format(result.score),
-                      style: AppTextStyles.display.copyWith(
-                        color: AppColors.accentCyan,
-                        fontSize: 40,
-                      ),
+                    const SizedBox(height: AppSpacing.lg),
+                    _StatRow(
+                      label: 'Best score (all time)',
+                      value: scoreFormat.format(result.bestScore),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: 'Targets solved',
+                      value: '${result.targetsSolved}',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(
+                      label: 'Best combo',
+                      value: 'x${result.bestCombo}',
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _StatRow(label: 'Accuracy', value: _accuracyLabel()),
+                    const Spacer(),
+                    PrimaryButton(
+                      label: 'Play again',
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).pushReplacementNamed(AppRouter.classicGame);
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SecondaryButton(
+                      label: 'Home',
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil(AppRouter.home, (_) => false);
+                      },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              _StatRow(
-                label: 'Best score (all time)',
-                value: scoreFormat.format(result.bestScore),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(
-                label: 'Targets solved',
-                value: '${result.targetsSolved}',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(
-                label: 'Best combo',
-                value: 'x${result.bestCombo}',
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _StatRow(label: 'Accuracy', value: _accuracyLabel()),
-              const Spacer(),
-              PrimaryButton(
-                label: 'Play again',
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed(
-                    AppRouter.classicGame,
-                  );
-                },
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              SecondaryButton(
-                label: 'Home',
-                onPressed: () {
-                  Navigator.of(context).pushNamedAndRemoveUntil(
-                    AppRouter.home,
-                    (_) => false,
-                  );
-                },
-              ),
-            ],
-          ),
+            ),
+            const AdBanner(),
+          ],
         ),
       ),
     );
@@ -199,15 +232,11 @@ class _StatRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-        border: Border.all(
-          color: AppColors.outline.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
-          Expanded(
-            child: Text(label, style: AppTextStyles.body),
-          ),
+          Expanded(child: Text(label, style: AppTextStyles.body)),
           Text(value, style: AppTextStyles.title),
         ],
       ),

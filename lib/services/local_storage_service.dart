@@ -130,6 +130,7 @@ class LocalStorageService {
     final enriched = result.copyWith(
       isNewBestScore: isNewBest,
       bestScore: updatedBestClassic,
+      classicCompletionsTotal: newStats.totalGamesPlayed,
     );
 
     return (stats: newStats, result: enriched);
