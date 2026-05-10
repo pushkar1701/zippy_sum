@@ -12,13 +12,13 @@ abstract final class AppTextStyles {
     color: AppColors.onSurface,
   );
 
-  /// Screen titles (reference: cyan emphasis on headers).
+  /// App bar / screen titles (consistent arcade header).
   static const TextStyle screenTitle = TextStyle(
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: FontWeight.w800,
     height: 1.2,
-    color: AppColors.accentCyan,
-    letterSpacing: 0.2,
+    color: AppColors.onSurface,
+    letterSpacing: -0.2,
   );
 
   static const TextStyle headline = TextStyle(
@@ -68,7 +68,7 @@ abstract final class AppTextStyles {
   static const TextStyle hudLabel = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w600,
-    letterSpacing: 0.6,
+    letterSpacing: 0.45,
     color: AppColors.onSurfaceMuted,
   );
 

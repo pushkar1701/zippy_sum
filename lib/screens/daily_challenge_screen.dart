@@ -10,6 +10,7 @@ import '../models/game_mode.dart';
 import '../models/player_stats.dart';
 import '../services/local_storage_service.dart';
 import '../widgets/ad_banner.dart';
+import '../widgets/arcade_background.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/secondary_button.dart';
 import '../widgets/stat_card.dart';
@@ -34,118 +35,157 @@ class DailyChallengeScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: FutureBuilder<PlayerStats>(
-              future: LocalStorageService.instance.loadStats(),
-              builder: (context, snapshot) {
-                final stats = snapshot.data ?? PlayerStats.empty();
-                final scoreFmt = NumberFormat.decimalPattern();
-                final today = DateTime.now();
-                final todayKey = DailySeed.dateKey(today);
-                final todayBest = stats.lastDailyDateString == todayKey
-                    ? stats.todayDailyBestScore
-                    : 0;
+      body: ArcadeBackground(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: FutureBuilder<PlayerStats>(
+                future: LocalStorageService.instance.loadStats(),
+                builder: (context, snapshot) {
+                  final stats = snapshot.data ?? PlayerStats.empty();
+                  final scoreFmt = NumberFormat.decimalPattern();
+                  final today = DateTime.now();
+                  final todayKey = DailySeed.dateKey(today);
+                  final todayBest = stats.lastDailyDateString == todayKey
+                      ? stats.todayDailyBestScore
+                      : 0;
+                  final streak = stats.dailyStreak;
+                  final streakLabel = streak == 0
+                      ? '0 days'
+                      : (streak == 1 ? '1 day' : '$streak days');
 
-                return Padding(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const ZippyHeader(
-                        title: "Today's puzzle",
-                        subtitle: 'One seeded board per calendar day.',
-                        showAccentLine: true,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        dateFmt.format(today),
-                        style: AppTextStyles.title,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatCard(
-                              title: 'Current streak',
-                              value: stats.dailyStreak == 0
-                                  ? '—'
-                                  : (stats.dailyStreak == 1
-                                        ? '1 day'
-                                        : '${stats.dailyStreak} days'),
-                              compact: true,
-                              accentTitle: true,
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenPaddingH,
+                      AppSpacing.md,
+                      AppSpacing.screenPaddingH,
+                      AppSpacing.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const ZippyHeader(
+                          title: "Today's puzzle",
+                          subtitle: 'One seeded board per calendar day.',
+                          showAccentLine: true,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        // Date chip
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.xs,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentCyan.withValues(alpha: 0.1),
+                              borderRadius:
+                                  BorderRadius.circular(AppSpacing.radiusFull),
+                              border: Border.all(
+                                color: AppColors.accentCyan.withValues(
+                                  alpha: 0.35,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 14,
+                                  color: AppColors.accentCyan,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  dateFmt.format(today),
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.accentCyan,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: StatCard(
-                              title: "Today's best",
-                              value: scoreFmt.format(todayBest),
-                              compact: true,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                title: 'Current streak',
+                                value: streakLabel,
+                                compact: true,
+                                accentTitle: true,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: StatCard(
+                                title: "Today's best",
+                                value: scoreFmt.format(todayBest),
+                                compact: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        StatCard(
+                          title: 'Best daily score',
+                          value: scoreFmt.format(stats.bestDailyScore),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'RECENT PUZZLES',
+                          style: AppTextStyles.hudLabel.copyWith(
+                            color: AppColors.accentCyan,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainer,
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.radiusMd,
+                            ),
+                            border: Border.all(
+                              color: AppColors.outline.withValues(alpha: 0.35),
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      StatCard(
-                        title: 'Best daily score',
-                        value: scoreFmt.format(stats.bestDailyScore),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                      Text(
-                        'RECENT PUZZLES',
-                        style: AppTextStyles.hudLabel.copyWith(
-                          color: AppColors.accentCyan,
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainer,
-                          borderRadius: BorderRadius.circular(
-                            AppSpacing.radiusMd,
-                          ),
-                          border: Border.all(
-                            color: AppColors.outline.withValues(alpha: 0.35),
+                          child: Text(
+                            'Today (${DailySeed.dateKey(today)}): '
+                            'best ${scoreFmt.format(todayBest)}. '
+                            'Full history stays on device only.',
+                            style: AppTextStyles.caption,
                           ),
                         ),
-                        child: Text(
-                          'Today (${DailySeed.dateKey(today)}): '
-                          'best ${scoreFmt.format(todayBest)}. '
-                          'Full history stays on device only.',
-                          style: AppTextStyles.caption,
+                        const SizedBox(height: AppSpacing.xxl),
+                        PrimaryButton(
+                          label: 'START DAILY',
+                          trailingIcon: Icons.bolt_rounded,
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(
+                              AppRouter.classicGame,
+                              arguments: GameMode.daily,
+                            );
+                          },
                         ),
-                      ),
-                      const Spacer(),
-                      PrimaryButton(
-                        label: 'START DAILY',
-                        trailingIcon: Icons.play_arrow_rounded,
-                        onPressed: () {
-                          Navigator.of(context).pushNamed(
-                            AppRouter.classicGame,
-                            arguments: GameMode.daily,
-                          );
-                        },
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      SecondaryButton(
-                        label: 'Back',
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  ),
-                );
-              },
+                        const SizedBox(height: AppSpacing.sm),
+                        SecondaryButton(
+                          label: 'Back',
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-          const AdBanner(),
-        ],
+            const AdBanner(),
+          ],
+        ),
       ),
     );
   }

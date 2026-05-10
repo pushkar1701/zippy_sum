@@ -17,7 +17,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _haptics = true;
-  bool _sound = false;
   String _version = '…';
   bool _loaded = false;
 
@@ -29,12 +28,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _load() async {
     final h = await LocalStorageService.instance.getHapticsEnabled();
-    final s = await LocalStorageService.instance.getSoundEffectsEnabled();
     final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
       _haptics = h;
-      _sound = s;
       _version = '${info.version} (${info.buildNumber})';
       _loaded = true;
     });
@@ -44,11 +41,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await LocalStorageService.instance.setHapticsEnabled(v);
     HapticsService.instance.invalidateSettings();
     setState(() => _haptics = v);
-  }
-
-  Future<void> _setSound(bool v) async {
-    await LocalStorageService.instance.setSoundEffectsEnabled(v);
-    setState(() => _sound = v);
   }
 
   Future<void> _confirmResetStats() async {
@@ -164,28 +156,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: CircularProgressIndicator(color: AppColors.accentCyan),
             )
           : ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenPaddingH,
+                AppSpacing.md,
+                AppSpacing.screenPaddingH,
+                AppSpacing.xl,
+              ),
               children: [
                 Text('Gameplay', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.sm),
                 SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
                   title: const Text('Haptics'),
                   subtitle: const Text('Light taps on actions and results'),
                   value: _haptics,
                   activeThumbColor: AppColors.accentCyan,
                   onChanged: _setHaptics,
                 ),
-                SwitchListTile(
-                  title: const Text('Sound effects'),
-                  subtitle: const Text('Coming soon — toggle saved for later'),
-                  value: _sound,
-                  activeThumbColor: AppColors.accentCyan,
-                  onChanged: _setSound,
+                // Sound effects — not yet implemented; row shown but inert.
+                Opacity(
+                  opacity: 0.45,
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Sound effects'),
+                    subtitle: const Text('Coming soon'),
+                    value: false,
+                    activeThumbColor: AppColors.accentCyan,
+                    onChanged: null,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
                 Text('Privacy', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.sm),
                 ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: AppSpacing.sm,
                   title: const Text('Privacy choices'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () =>
@@ -195,6 +200,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text('Support & legal', style: AppTextStyles.headline),
                 const SizedBox(height: AppSpacing.sm),
                 ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: AppSpacing.sm,
                   title: const Text('Privacy Policy'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _placeholderSheet(
@@ -204,6 +211,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: AppSpacing.sm,
                   title: const Text('Support'),
                   trailing: const Icon(Icons.chevron_right_rounded),
                   onTap: () => _placeholderSheet(
@@ -212,6 +221,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  minVerticalPadding: AppSpacing.sm,
                   leading: Icon(
                     Icons.wifi_off_rounded,
                     color: AppColors.onSurfaceMuted,

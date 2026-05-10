@@ -19,13 +19,20 @@ abstract final class AppColors {
   static const Color warningOrange = Color(0xFFFF9900);
   static const Color warningMuted = Color(0xFFFFB366);
 
-  static const Color tileFace = Color(0xFFFFFFFF);
-  static const Color tileNumber = Color(0xFF212529);
+  static const Color tileFace = Color(0xFFF5F6F8);
+  static const Color tileNumber = Color(0xFF1A1D21);
+
+  static const Color tileMistakeFill = Color(0xFF6B2A2A);
+  static const Color tileMistakeBorder = Color(0xFFFF5252);
+  static const Color tileSuccessFill = Color(0xFF1FA88A);
+  static const Color timerUrgent = Color(0xFFFF6B6B);
 
   static const Color outline = Color(0xFF495057);
   static const Color outlineBright = Color(0xFF868E96);
 
   static const Color error = Color(0xFFFF6B6B);
+
+  static const Color accentAmber = Color(0xFFFFD600);
 
   /// Primary CTA gradient endpoints.
   static const List<Color> primaryButtonGradient = [

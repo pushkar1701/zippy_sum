@@ -19,7 +19,14 @@ void main() {
     await tester.pumpWidget(const ZippySumApp());
     expect(find.byType(LinearProgressIndicator), findsOneWidget);
 
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    // Pump past the 700ms splash delay + navigation + home FutureBuilder.
+    // pumpAndSettle cannot be used because ArcadeBackground runs a repeating
+    // animation that never settles.
+    await tester.pump(); // trigger postFrameCallback
+    await tester.pump(const Duration(milliseconds: 900)); // fire splash timer
+    await tester.pump(); // process navigation microtasks
+    await tester.pump(); // FutureBuilder resolution
+    await tester.pump(const Duration(milliseconds: 100)); // widget settle
 
     expect(find.text('Tap fast. Sum faster.'), findsOneWidget);
   });

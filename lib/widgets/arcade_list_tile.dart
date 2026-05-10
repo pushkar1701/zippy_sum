@@ -12,12 +12,15 @@ class ArcadeListTile extends StatelessWidget {
     this.onTap,
     this.icon,
     this.compact = false,
+    this.badge,
   });
 
   final String label;
   final VoidCallback? onTap;
   final IconData? icon;
   final bool compact;
+  /// Optional small pill badge shown before the chevron (e.g. "TODAY").
+  final String? badge;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +54,30 @@ class ArcadeListTile extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (badge != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentCyan.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                      border: Border.all(
+                        color: AppColors.accentCyan.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Text(
+                      badge!,
+                      style: AppTextStyles.hudLabel.copyWith(
+                        color: AppColors.accentCyan,
+                        fontSize: 10,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                ],
                 Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.onSurfaceMuted,
