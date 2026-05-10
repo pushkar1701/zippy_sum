@@ -7,6 +7,8 @@ class LocalStorageService {
 
   static const String keyBestClassicScore = 'best_classic_score';
   static const String keyGamesPlayed = 'games_played';
+  /// Consecutive days with a completed daily (local placeholder; not synced).
+  static const String keyDailyStreak = 'daily_streak';
 
   Future<SharedPreferences> _prefs() => SharedPreferences.getInstance();
 

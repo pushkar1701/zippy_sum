@@ -10,6 +10,7 @@ class ZippySumApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'ZippySum',
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.dark(),
       initialRoute: AppRouter.initialRoute,
       routes: AppRouter.routes,

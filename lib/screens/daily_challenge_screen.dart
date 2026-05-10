@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../app/app_colors.dart';
 import '../app/app_router.dart';
 import '../app/app_spacing.dart';
 import '../widgets/primary_button.dart';
+import '../widgets/secondary_button.dart';
 import '../widgets/zippy_header.dart';
 
 class DailyChallengeScreen extends StatelessWidget {
@@ -11,6 +13,7 @@ class DailyChallengeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Daily challenge'),
         leading: IconButton(
@@ -24,14 +27,29 @@ class DailyChallengeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const ZippyHeader(
-              title: 'Daily',
-              subtitle: 'Placeholder — challenge flow comes later.',
+              title: "Today's puzzle",
+              subtitle: 'One fresh board every day. Placeholder flow for now.',
+              showAccentLine: true,
             ),
-            const Spacer(),
+            const SizedBox(height: AppSpacing.lg),
+            Expanded(
+              child: Center(
+                child: Icon(
+                  Icons.calendar_month_rounded,
+                  size: 72,
+                  color: AppColors.accentCyan.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
             PrimaryButton(
-              label: 'Mark complete (demo)',
+              label: 'Start (placeholder)',
               onPressed: () => Navigator.of(context)
                   .pushReplacementNamed(AppRouter.dailyComplete),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            SecondaryButton(
+              label: 'Back',
+              onPressed: () => Navigator.of(context).pop(),
             ),
           ],
         ),
