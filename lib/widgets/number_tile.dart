@@ -6,12 +6,6 @@ import '../app/app_text_styles.dart';
 import '../models/tile_model.dart';
 
 /// Renders a board cell from [TileModel] with animated interaction states.
-///
-/// – Default   : off-white face, dark number.
-/// – Selected  : cyan fill, scale-up.
-/// – Mistake   : dark-red fill, red border, horizontal shake.
-/// – Correct   : teal fill, brief scale-pop.
-/// – Disabled  : dimmed, not tappable.
 class NumberTile extends StatefulWidget {
   const NumberTile({
     super.key,
@@ -32,8 +26,6 @@ class _NumberTileState extends State<NumberTile>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
 
-  // Shake: horizontal wiggle for mistake.
-  // Pop:  scale-up then snap back for correct.
   late Animation<double> _shakeX;
   late Animation<double> _popScale;
   bool _isShaking = false;
@@ -95,6 +87,9 @@ class _NumberTileState extends State<NumberTile>
 
   @override
   Widget build(BuildContext context) {
+    final isMultiplier = widget.tile.isScoreMultiplierTile;
+    final mult = widget.tile.scoreMultiplier;
+
     final Color bg;
     final Color fg;
     switch (widget.tile.state) {
@@ -111,7 +106,9 @@ class _NumberTileState extends State<NumberTile>
         bg = AppColors.accentCyan;
         fg = AppColors.background;
       case TileState.normal:
-        bg = AppColors.tileFace;
+        bg = isMultiplier
+            ? AppColors.tileFace
+            : AppColors.tileFace;
         fg = AppColors.tileNumber;
     }
 
@@ -119,94 +116,169 @@ class _NumberTileState extends State<NumberTile>
     final borderW =
         widget.tile.isSelected || widget.tile.state == TileState.mistake
             ? 2.0
+            : isMultiplier
+            ? 1.5
             : 1.0;
     final borderColor = switch (widget.tile.state) {
-      TileState.selected => AppColors.accentCyanDim,
+      TileState.selected => isMultiplier
+          ? AppColors.accentAmber
+          : AppColors.accentCyanDim,
       TileState.mistake => AppColors.tileMistakeBorder,
       TileState.correct => AppColors.accentCyan,
-      _ => AppColors.outline.withValues(alpha: 0.22),
+      _ => isMultiplier
+          ? AppColors.accentAmber.withValues(alpha: 0.75)
+          : AppColors.outline.withValues(alpha: 0.22),
     };
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.tile.state == TileState.disabled ? null : widget.onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusTile),
-        splashColor: AppColors.accentCyan.withValues(alpha: 0.2),
-        highlightColor: AppColors.primaryPurple.withValues(alpha: 0.08),
-        child: AnimatedBuilder(
-          animation: _ctrl,
-          builder: (context, child) {
-            double dx = 0;
-            double popS = 1.0;
-            if (_isShaking) dx = _shakeX.value;
-            if (_isPopping) popS = _popScale.value;
+    final semanticsLabel = isMultiplier
+        ? '${widget.tile.value}, score multiplier ${mult}x'
+        : '${widget.tile.value}';
 
-            return Transform.translate(
-              offset: Offset(dx, 0),
-              child: Transform.scale(
-                scale: popS,
-                child: child,
-              ),
-            );
-          },
-          child: AnimatedScale(
-            scale: widget.tile.isSelected ? 1.04 : 1.0,
-            duration: const Duration(milliseconds: 120),
-            curve: Curves.easeOutCubic,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+    return Semantics(
+      label: semanticsLabel,
+      button: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.tile.state == TileState.disabled ? null : widget.onTap,
+          borderRadius: BorderRadius.circular(AppSpacing.radiusTile),
+          splashColor: AppColors.accentCyan.withValues(alpha: 0.2),
+          highlightColor: AppColors.primaryPurple.withValues(alpha: 0.08),
+          child: AnimatedBuilder(
+            animation: _ctrl,
+            builder: (context, child) {
+              double dx = 0;
+              double popS = 1.0;
+              if (_isShaking) dx = _shakeX.value;
+              if (_isPopping) popS = _popScale.value;
+
+              return Transform.translate(
+                offset: Offset(dx, 0),
+                child: Transform.scale(
+                  scale: popS,
+                  child: child,
+                ),
+              );
+            },
+            child: AnimatedScale(
+              scale: widget.tile.isSelected ? 1.04 : 1.0,
+              duration: const Duration(milliseconds: 120),
               curve: Curves.easeOutCubic,
-              decoration: BoxDecoration(
-                color: bg,
-                borderRadius: BorderRadius.circular(AppSpacing.radiusTile),
-                border: Border.all(color: borderColor, width: borderW),
-                boxShadow: [
-                  if (widget.tile.state == TileState.selected)
-                    BoxShadow(
-                      color: AppColors.accentCyan.withValues(alpha: 0.38),
-                      blurRadius: 14,
-                      offset: const Offset(0, 3),
-                    )
-                  else
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 5,
-                      offset: const Offset(0, 2),
-                    ),
-                ],
-              ),
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Center(child: Text('${widget.tile.value}', style: style)),
-                  if (widget.showMatchCheck && widget.tile.isSelected)
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          color: AppColors.accentCyan,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              blurRadius: 4,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          size: 14,
-                          color: AppColors.tileNumber,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusTile),
+                  border: Border.all(color: borderColor, width: borderW),
+                  boxShadow: [
+                    if (isMultiplier && widget.tile.state == TileState.normal)
+                      BoxShadow(
+                        color: AppColors.accentAmber.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      )
+                    else if (widget.tile.state == TileState.selected &&
+                        isMultiplier)
+                      BoxShadow(
+                        color: AppColors.accentAmber.withValues(alpha: 0.5),
+                        blurRadius: 14,
+                        offset: const Offset(0, 2),
+                      )
+                    else if (widget.tile.state == TileState.selected)
+                      BoxShadow(
+                        color: AppColors.accentCyan.withValues(alpha: 0.38),
+                        blurRadius: 14,
+                        offset: const Offset(0, 3),
+                      )
+                    else
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                  ],
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Center(child: Text('${widget.tile.value}', style: style)),
+                    if (isMultiplier)
+                      Positioned(
+                        top: 3,
+                        right: 3,
+                        child: _MultiplierBadge(multiplier: mult),
+                      ),
+                    if (widget.showMatchCheck && widget.tile.isSelected)
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentCyan,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            size: 14,
+                            color: AppColors.tileNumber,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MultiplierBadge extends StatelessWidget {
+  const _MultiplierBadge({required this.multiplier});
+
+  final int multiplier;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.accentAmber,
+            AppColors.accentAmber.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.7),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentAmber.withValues(alpha: 0.65),
+            blurRadius: 6,
+          ),
+        ],
+      ),
+      child: Text(
+        '${multiplier}x',
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.background,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          height: 1.0,
+          letterSpacing: 0.3,
         ),
       ),
     );

@@ -8,10 +8,8 @@ import '../models/tile_model.dart';
 
 /// Classic ZippySum round state — plain Dart, no Flutter.
 ///
-/// Drive time with [tick]. Pass a single [Random] so [BoardGenerator],
-/// [TargetGenerator], and tile re-rolls stay on the same sequence (e.g. seeded
-/// daily challenge). Optional [boardGenerator] / [targetGenerator] must use that
-/// same [Random] if you pass them explicitly.
+/// Each **target round** has exactly one score-multiplier tile:
+/// multiplier = [solvedCount] + 2 (first target → 2×, second → 3×, …).
 class GameController {
   GameController({
     GameConfig config = const GameConfig(),
@@ -40,9 +38,7 @@ class GameController {
         );
       }
       _board = List<int>.from(debugInitialBoard);
-      _applyNewTarget(
-        _targetGenerator.pickTarget(_config, _board, elapsedSeconds),
-      );
+      _beginNewTargetRound();
     } else {
       _bootstrapBoardAndTarget();
     }
@@ -53,19 +49,16 @@ class GameController {
   late final BoardGenerator _boardGenerator;
   late final TargetGenerator _targetGenerator;
 
-  /// Optional notify hook for UI layers.
   void Function()? onChanged;
 
-  /// Fired after a correct solve with points earned this solve (before [onChanged]).
-  void Function(int pointsEarned)? onCorrect;
+  /// [scoreMultiplierApplied] is set when the solve included the multiplier tile.
+  void Function(int pointsEarned, {int? scoreMultiplierApplied})? onCorrect;
 
-  /// Fired when selection goes over the target (before [onChanged]).
   void Function()? onMistake;
 
   late List<int> _board;
   final Set<int> _selected = <int>{};
 
-  /// After sum > target: selections stay until user deselects or [clearSelection].
   bool _mistakeActive = false;
 
   int _target = 0;
@@ -79,18 +72,26 @@ class GameController {
   late int _sessionElapsedMs;
   int _targetElapsedMs = 0;
 
+  /// Index of the only multiplier tile for the current target round.
+  int _multiplierTileId = 0;
+
   GameConfig get config => _config;
 
-  /// Floored whole seconds since the classic round started.
+  /// Target round number within the session (1-based): [solvedCount] + 1.
+  int get currentRoundNumber => _solvedCount + 1;
+
+  /// Score multiplier for the current target round: [solvedCount] + 2.
+  int get currentMultiplier => _solvedCount + 2;
+
+  int get multiplierTileId => _multiplierTileId;
+
   int get elapsedSeconds => _sessionElapsedMs ~/ 1000;
 
-  /// Floored countdown seconds left in the classic round (never negative).
   int get remainingSeconds {
     final r = _config.classicDurationSeconds - elapsedSeconds;
     return r < 0 ? 0 : r;
   }
 
-  /// Fractional seconds since the current target was set.
   double get secondsOnCurrentTarget => _targetElapsedMs / 1000.0;
 
   bool get isRoundEnded => remainingSeconds <= 0;
@@ -121,11 +122,6 @@ class GameController {
     _notify();
   }
 
-  /// One model per cell: [id], [value], [isSelected], and [state].
-  ///
-  /// During play: [TileState.normal], [TileState.selected], or [TileState.mistake]
-  /// for selected cells while [mistakeActive]. When the round has ended, all tiles
-  /// use [TileState.disabled].
   List<TileModel> tileModels() {
     return List<TileModel>.generate(_config.tileCount, (i) {
       final selected = _selected.contains(i);
@@ -144,6 +140,7 @@ class GameController {
         value: _board[i],
         isSelected: selected,
         state: state,
+        scoreMultiplier: i == _multiplierTileId ? currentMultiplier : 1,
       );
     });
   }
@@ -152,9 +149,18 @@ class GameController {
 
   void _bootstrapBoardAndTarget() {
     _board = _boardGenerator.randomFlatBoard(_config);
-    _applyNewTarget(
-      _targetGenerator.pickTarget(_config, _board, elapsedSeconds),
+    _beginNewTargetRound();
+  }
+
+  void _beginNewTargetRound() {
+    _multiplierTileId = _random.nextInt(_config.tileCount);
+    final pick = _targetGenerator.pickTargetIncludingMultiplier(
+      config: _config,
+      board: _board,
+      elapsedSecondsInRound: elapsedSeconds,
+      multiplierTileId: _multiplierTileId,
     );
+    _applyNewTarget(pick);
   }
 
   void _applyNewTarget(TargetPick pick) {
@@ -183,7 +189,6 @@ class GameController {
     _notify();
   }
 
-  /// Clears selection and mistake state (sum returns to 0); notifies listeners.
   void clearSelection() {
     _mistakeActive = false;
     _selected.clear();
@@ -243,11 +248,19 @@ class GameController {
   void _handleCorrect() {
     final elapsed = _targetElapsedMs;
     final comboBeforeIncrement = _combo;
+    final selected = List<int>.from(_selected);
+    final usedMultiplier = selected.contains(_multiplierTileId);
+    final scoreMult = currentMultiplier;
 
-    final gained = Scoring.pointsForCorrect(
+    final normalPoints = Scoring.pointsForCorrect(
       config: _config,
       elapsedMsSinceTarget: elapsed,
       comboBeforeSolve: comboBeforeIncrement,
+    );
+    final gained = Scoring.applyScoreMultiplier(
+      normalPoints: normalPoints,
+      scoreMultiplier: scoreMult,
+      usedMultiplierTile: usedMultiplier,
     );
 
     _score += gained;
@@ -258,16 +271,17 @@ class GameController {
     _solvedCount++;
     _mistakeActive = false;
 
-    onCorrect?.call(gained);
+    onCorrect?.call(
+      gained,
+      scoreMultiplierApplied: usedMultiplier ? scoreMult : null,
+    );
 
-    for (final i in List<int>.from(_selected)) {
+    for (final i in selected) {
       _board[i] = _rollTileValue();
     }
     _selected.clear();
 
-    _applyNewTarget(
-      _targetGenerator.pickTarget(_config, _board, elapsedSeconds),
-    );
+    _beginNewTargetRound();
     _notify();
   }
 

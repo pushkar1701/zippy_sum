@@ -40,6 +40,7 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
   bool _navigatedToGameOver = false;
   int _comboAnimKey = 0;
   int? _floatingPoints;
+  int? _floatingScoreMultiplier;
   bool _wasTimeWarn = false;
 
   late final AnimationController _pulseController;
@@ -76,14 +77,20 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
     _startRoundTimer();
   }
 
-  void _onCorrectSolve(int pointsEarned) {
+  void _onCorrectSolve(int pointsEarned, {int? scoreMultiplierApplied}) {
     unawaited(HapticsService.instance.correct());
     setState(() {
       _comboAnimKey++;
       _floatingPoints = pointsEarned;
+      _floatingScoreMultiplier = scoreMultiplierApplied;
     });
     Future<void>.delayed(const Duration(milliseconds: 900), () {
-      if (mounted) setState(() => _floatingPoints = null);
+      if (mounted) {
+        setState(() {
+          _floatingPoints = null;
+          _floatingScoreMultiplier = null;
+        });
+      }
     });
     _pulseController.forward(from: 0).then((_) {
       if (mounted) _pulseController.reverse();
@@ -301,6 +308,7 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
         _navigatedToGameOver = false;
         _comboAnimKey = 0;
         _floatingPoints = null;
+        _floatingScoreMultiplier = null;
         _game.resetSession();
       });
       _startRoundTimer();
@@ -559,55 +567,83 @@ class _ClassicGameScreenState extends State<ClassicGameScreen>
                           ),
                         );
                       },
-                      child: Row(
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.bolt_rounded,
-                            color: AppColors.accentAmber,
-                            size: 22,
-                            shadows: [
-                              Shadow(
-                                color: AppColors.accentAmber.withValues(
-                                  alpha: 0.7,
-                                ),
-                                blurRadius: 8,
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '+${_floatingPoints!}',
-                            style: AppTextStyles.display.copyWith(
-                              color: AppColors.accentCyan,
-                              fontSize: 32,
-                              shadows: [
-                                Shadow(
-                                  color: AppColors.accentCyan.withValues(
-                                    alpha: 0.65,
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.bolt_rounded,
+                                color: AppColors.accentAmber,
+                                size: 22,
+                                shadows: [
+                                  Shadow(
+                                    color: AppColors.accentAmber.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                    blurRadius: 8,
                                   ),
-                                  blurRadius: 12,
+                                ],
+                              ),
+                              Text(
+                                _floatingScoreMultiplier != null
+                                    ? '+${_floatingPoints!} · ${_floatingScoreMultiplier}x'
+                                    : '+${_floatingPoints!}',
+                                style: AppTextStyles.display.copyWith(
+                                  color: AppColors.accentCyan,
+                                  fontSize: 32,
+                                  shadows: [
+                                    Shadow(
+                                      color: AppColors.accentCyan.withValues(
+                                        alpha: 0.65,
+                                      ),
+                                      blurRadius: 12,
+                                    ),
+                                    Shadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                Shadow(
-                                  color: Colors.black.withValues(alpha: 0.5),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.bolt_rounded,
-                            color: AppColors.accentAmber,
-                            size: 22,
-                            shadows: [
-                              Shadow(
-                                color: AppColors.accentAmber.withValues(
-                                  alpha: 0.7,
-                                ),
-                                blurRadius: 8,
+                              ),
+                              Icon(
+                                Icons.bolt_rounded,
+                                color: AppColors.accentAmber,
+                                size: 22,
+                                shadows: [
+                                  Shadow(
+                                    color: AppColors.accentAmber.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                    blurRadius: 8,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
+                          if (_floatingScoreMultiplier != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_floatingScoreMultiplier}x BONUS!',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.accentAmber,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                shadows: [
+                                  Shadow(
+                                    color: AppColors.accentAmber.withValues(
+                                      alpha: 0.5,
+                                    ),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

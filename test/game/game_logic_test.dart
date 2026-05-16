@@ -302,5 +302,6 @@ void main() {
       expect(c!.selectedIndices, isNotEmpty);
       expect(c.mistakeActive, isTrue);
     });
+
   });
 }

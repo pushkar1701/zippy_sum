@@ -36,4 +36,16 @@ abstract final class Scoring {
         (comboBeforeSolve - 1).clamp(0, 999) * config.comboBonusPerTier;
     return base + speed + comboExtra;
   }
+
+  /// Applies the per-target score multiplier when the multiplier tile is selected.
+  static int applyScoreMultiplier({
+    required int normalPoints,
+    required int scoreMultiplier,
+    required bool usedMultiplierTile,
+  }) {
+    if (!usedMultiplierTile || scoreMultiplier <= 1) {
+      return normalPoints;
+    }
+    return normalPoints * scoreMultiplier;
+  }
 }

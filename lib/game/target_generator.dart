@@ -26,7 +26,8 @@ class TargetGenerator {
 
   final Random _random;
 
-  /// [elapsedSecondsInRound] drives tile count (see class doc).
+  /// Legacy pick — does not guarantee a multiplier tile. Prefer
+  /// [pickTargetIncludingMultiplier] for gameplay.
   TargetPick pickTarget(
     GameConfig config,
     List<int> board,
@@ -45,12 +46,49 @@ class TargetGenerator {
       chosen.add(_random.nextInt(config.tileCount));
     }
 
+    return _indicesToPick(board, chosen);
+  }
+
+  /// Builds a target whose solution always includes [multiplierTileId].
+  TargetPick pickTargetIncludingMultiplier({
+    required GameConfig config,
+    required List<int> board,
+    required int elapsedSecondsInRound,
+    required int multiplierTileId,
+  }) {
+    if (board.length != config.tileCount) {
+      throw ArgumentError(
+        'Board length ${board.length} != ${config.tileCount}',
+      );
+    }
+    if (multiplierTileId < 0 || multiplierTileId >= config.tileCount) {
+      throw RangeError.range(
+        multiplierTileId,
+        0,
+        config.tileCount - 1,
+        'multiplierTileId',
+      );
+    }
+
+    final k = _pickK(elapsedSecondsInRound);
+    final chosen = <int>{multiplierTileId};
+    final others = List<int>.generate(config.tileCount, (i) => i)
+      ..remove(multiplierTileId);
+
+    while (chosen.length < k && others.isNotEmpty) {
+      final pick = _random.nextInt(others.length);
+      chosen.add(others.removeAt(pick));
+    }
+
+    return _indicesToPick(board, chosen);
+  }
+
+  TargetPick _indicesToPick(List<int> board, Set<int> chosen) {
     final indices = chosen.toList()..sort();
     var sum = 0;
     for (final i in indices) {
       sum += board[i];
     }
-
     return TargetPick(indices: indices, sum: sum);
   }
 
